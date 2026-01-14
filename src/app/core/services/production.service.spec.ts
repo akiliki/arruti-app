@@ -14,6 +14,9 @@ describe('ProductionService', () => {
     });
     service = TestBed.inject(ProductionService);
     httpMock = TestBed.inject(HttpTestingController);
+    
+    // Silenciar console.error durante las pruebas para evitar confusión en la salida
+    spyOn(console, 'error');
   });
 
   afterEach(() => {
