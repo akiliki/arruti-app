@@ -52,6 +52,12 @@ El proyecto se organiza en capas independientes para facilitar cambios y manteni
     npm start
     ```
 
+5.  **Verificar el backend:**
+    Puedes comprobar si tu Google Script está bien desplegado y accesible con:
+    ```bash
+    npm run test:backend
+    ```
+
 ---
 
 ## 🚀 Despliegue (GitHub Pages)

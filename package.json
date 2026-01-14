@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:backend": "node scripts/test-backend.js"
   },
   "private": true,
   "dependencies": {

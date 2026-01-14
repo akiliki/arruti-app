@@ -30,3 +30,13 @@ jobs:
         run: |
           cd backend
           clasp push -f
+
+      - name: Verify Backend Deployment
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        run: |
+          if [ -z "$BACKEND_URL" ]; then
+            echo "⚠️ Skipping verification because BACKEND_URL secret is not set."
+          else
+            npm run test:backend
+          fi
