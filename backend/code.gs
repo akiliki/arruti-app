@@ -41,7 +41,8 @@ function doGet() {
       producto: row[1],
       cantidad: row[2],
       fecha: row[3],
-      estado_actual: row[4]
+      estado_actual: row[4],
+      fecha_actualizacion: row[5] || null
     }));
 
     // Cálculo de estadísticas
@@ -68,6 +69,84 @@ function doGet() {
 function createResponse(content) {
   return ContentService.createTextOutput(JSON.stringify(content))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Maneja las peticiones POST para añadir nuevos pedidos
+ */
+function doPost(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheetPedidos = ss.getSheetByName('Pedidos');
+    
+    if (!sheetPedidos) {
+      throw new Error("Hoja 'Pedidos' no encontrada.");
+    }
+
+    if (payload.action === 'updateStatus') {
+      return handleUpdateStatus(sheetPedidos, payload);
+    }
+
+    // Acción por defecto: Añadir pedido
+    return handleAddPedido(sheetPedidos, payload);
+
+  } catch (e) {
+    return createResponse({
+      status: "error",
+      message: "Error en doPost: " + e.message
+    });
+  }
+}
+
+/**
+ * Añade un nuevo pedido a la hoja
+ */
+function handleAddPedido(sheet, pedido) {
+  const lastRow = sheet.getLastRow();
+  const id = pedido.id || "P-" + (lastRow + 1).toString().padStart(4, '0');
+  
+  // Preparar fila: ID, Producto, Cantidad, Fecha, Estado, Fecha Actualización
+  const newRow = [
+    id,
+    pedido.producto,
+    pedido.cantidad,
+    pedido.fechaEntrega,
+    pedido.estado || 'Pendiente',
+    new Date() // Timestamp inicial
+  ];
+
+  sheet.appendRow(newRow);
+
+  return createResponse({
+    status: "success",
+    message: "Pedido añadido correctamente",
+    data: { id: id }
+  });
+}
+
+/**
+ * Actualiza el estado de un pedido existente
+ */
+function handleUpdateStatus(sheet, payload) {
+  const data = sheet.getDataRange().getValues();
+  const idToUpdate = payload.id;
+  const nuevoEstado = payload.estado;
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === idToUpdate) {
+      const row = i + 1;
+      sheet.getRange(row, 5).setValue(nuevoEstado); // Columna E (Estado)
+      sheet.getRange(row, 6).setValue(new Date());   // Columna F (Fecha Actualización)
+      
+      return createResponse({
+        status: "success",
+        message: "Estado actualizado correctamente"
+      });
+    }
+  }
+  
+  throw new Error("Pedido con ID " + idToUpdate + " no encontrado.");
 }
 
 /**

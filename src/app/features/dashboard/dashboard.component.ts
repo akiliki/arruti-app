@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { ProductionService } from '../../core/services/production.service';
 import { ProduccionStats } from '../../core/models/pedido.model';
 import { Observable, catchError, map, of, startWith } from 'rxjs';
@@ -13,10 +14,16 @@ interface DashboardState {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   template: `
     <div class="dashboard-container">
-      <h1>Panel de Producción - Pastelería Arruti</h1>
+      <div class="header">
+        <h1>Panel de Producción - Pastelería Arruti</h1>
+        <div class="actions">
+          <button class="btn-secondary" routerLink="/pedidos">Ver Todos los Pedidos</button>
+          <button class="btn-new" routerLink="/nuevo-pedido">Crear Nuevo Pedido</button>
+        </div>
+      </div>
       
       <ng-container *ngIf="state$ | async as state">
         <!-- Estado de Carga -->
@@ -51,6 +58,12 @@ interface DashboardState {
   `,
   styles: [`
     .dashboard-container { padding: 20px; font-family: sans-serif; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .actions { display: flex; gap: 10px; }
+    .btn-new { background: #d35400; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .btn-new:hover { background: #e67e22; }
+    .btn-secondary { background: #eee; color: #333; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .btn-secondary:hover { background: #ddd; }
     .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; }
     .stat-card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; background: #fff; }
     .value { font-size: 2rem; font-weight: bold; color: #d35400; }

@@ -9,6 +9,7 @@ interface ApiResponse {
     cantidad: number;
     fecha: string;
     estado_actual: string;
+    fecha_actualizacion?: string;
   }>;
   stats: {
     pendientes: number;
@@ -31,7 +32,8 @@ export class GoogleSheetsAdapter {
       producto: item.producto,
       cantidad: item.cantidad,
       fechaEntrega: new Date(item.fecha),
-      estado: this.mapEstado(item.estado_actual)
+      estado: this.mapEstado(item.estado_actual),
+      fechaActualizacion: item.fecha_actualizacion ? new Date(item.fecha_actualizacion) : undefined
     }));
   }
 
@@ -50,6 +52,18 @@ export class GoogleSheetsAdapter {
       totalPendientes: response.stats.pendientes ?? 0,
       enHorno: response.stats.horno ?? 0,
       finalizadosHoy: response.stats.finalizados ?? 0
+    };
+  }
+
+  /**
+   * Prepara un pedido para ser enviado a la API
+   */
+  prepareForPost(pedido: Partial<Pedido>): any {
+    return {
+      producto: pedido.producto,
+      cantidad: pedido.cantidad,
+      fechaEntrega: pedido.fechaEntrega instanceof Date ? pedido.fechaEntrega.toISOString() : pedido.fechaEntrega,
+      estado: pedido.estado || 'Pendiente'
     };
   }
 

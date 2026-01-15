@@ -6,6 +6,7 @@ export interface Pedido {
   cantidad: number;
   fechaEntrega: Date;
   estado: EstadoPedido;
+  fechaActualizacion?: Date;
 }
 
 export interface ProduccionStats {
