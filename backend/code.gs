@@ -1,60 +1,77 @@
 /**
  * Google Apps Script - Backend para Pastelería Arruti
- * 
- * Este script actúa como API para la aplicación Angular.
- * Debe desplegarse como "Aplicación Web" siguiendo las instrucciones del README principal.
  */
 
+// CONFIGURACIÓN: ID de tu Google Sheet
+const SPREADSHEET_ID = '1ECzAYLymvMzKq_lG1FVZ_J3Fx4jMv5nD9gQNpCeUCsc'; 
+
 function doGet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheetPedidos = ss.getSheetByName('Pedidos');
-  
-  if (!sheetPedidos) {
-    return createResponse({
-      status: "error",
-      message: "Hoja 'Pedidos' no encontrada"
-    });
-  }
+  try {
+    let ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 
-  // Obtener todos los datos de la hoja
-  const values = sheetPedidos.getDataRange().getValues();
-  const rows = values.slice(1); // Excluir cabecera
+    if (!ss) {
+      throw new Error("No se pudo acceder a la hoja de cálculo con el ID proporcionado.");
+    }
+    
+    const sheetPedidos = ss.getSheetByName('Pedidos');
+    if (!sheetPedidos) {
+      return createResponse({
+        status: "error",
+        message: "Hoja 'Pedidos' no encontrada en el documento. Verifique que la pestaña se llame exactamente 'Pedidos'."
+      });
+    }
 
-  // Mapear los datos al formato JSON que espera Angular
-  const data = rows.map(row => {
-    return {
+    const range = sheetPedidos.getDataRange();
+    const values = range.getValues();
+    
+    // Si la hoja está vacía o solo tiene cabecera
+    if (values.length < 2) {
+      return createResponse({
+        status: "success",
+        data: [],
+        stats: { pendientes: 0, horno: 0, finalizados: 0 }
+      });
+    }
+
+    const rows = values.slice(1);
+
+    // Mapeo de datos
+    const data = rows.map(row => ({
       id: row[0],
       producto: row[1],
       cantidad: row[2],
       fecha: row[3],
       estado_actual: row[4]
+    }));
+
+    // Cálculo de estadísticas
+    const stats = {
+      pendientes: data.filter(p => String(p.estado_actual).trim() === 'Pendiente').length,
+      horno: data.filter(p => String(p.estado_actual).trim() === 'En Proceso').length,
+      finalizados: data.filter(p => String(p.estado_actual).trim() === 'Finalizado').length
     };
-  });
 
-  // Calcular estadísticas para el dashboard
-  const stats = {
-    pendientes: data.filter(p => String(p.estado_actual).trim() === 'Pendiente').length,
-    horno: data.filter(p => String(p.estado_actual).trim() === 'En Proceso').length,
-    finalizados: data.filter(p => String(p.estado_actual).trim() === 'Finalizado').length
-  };
+    return createResponse({
+      status: "success",
+      data: data,
+      stats: stats
+    });
 
-  return createResponse({
-    status: "success",
-    data: data,
-    stats: stats
-  });
+  } catch (e) {
+    return createResponse({
+      status: "error",
+      message: "Error en el script: " + e.message
+    });
+  }
 }
 
-/**
- * Utilidad para crear respuestas JSON con CORS habilitado
- */
 function createResponse(content) {
   return ContentService.createTextOutput(JSON.stringify(content))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
 /**
- * Función opcional para probar desde el editor
+ * Función para probar y autorizar permisos
  */
 function testDeployment() {
   const result = doGet();

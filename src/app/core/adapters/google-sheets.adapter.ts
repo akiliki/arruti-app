@@ -39,10 +39,17 @@ export class GoogleSheetsAdapter {
    * Transforma las estadísticas de la API al modelo de dominio
    */
   adaptStats(response: ApiResponse): ProduccionStats {
+    if (!response.stats) {
+      return {
+        totalPendientes: 0,
+        enHorno: 0,
+        finalizadosHoy: 0
+      };
+    }
     return {
-      totalPendientes: response.stats.pendientes,
-      enHorno: response.stats.horno,
-      finalizadosHoy: response.stats.finalizados
+      totalPendientes: response.stats.pendientes ?? 0,
+      enHorno: response.stats.horno ?? 0,
+      finalizadosHoy: response.stats.finalizados ?? 0
     };
   }
 
