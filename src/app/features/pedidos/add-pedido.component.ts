@@ -12,216 +12,363 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith } from 
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   template: `
-    <div class="form-container">
-      <h2>Añadir Nuevo Pedido</h2>
-      
-      <form [formGroup]="pedidoForm" (ngSubmit)="onSubmit()">
-        <div class="form-group">
-          <label>Familias de Productos</label>
-          <div class="family-shortcuts">
-            <button 
-              type="button" 
-              class="btn-shortcut" 
-              [class.active]="(selectedFamilia$ | async) === null"
-              (click)="selectFamilia(null)"
-            >TODOS</button>
-            <button 
-              *ngFor="let f of familias$ | async" 
-              type="button" 
-              class="btn-shortcut" 
-              [class.active]="(selectedFamilia$ | async) === f"
-              (click)="selectFamilia(f)"
-            >{{f}}</button>
-          </div>
-        </div>
+    <div class="page-container">
+      <div class="header-section">
+        <button class="back-btn" routerLink="/pedidos" title="Volver">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <h2>Nuevo Pedido</h2>
+      </div>
 
-        <div class="form-group">
-          <label for="productoSearch">Buscar Producto</label>
-          <div class="search-container">
-            <input 
-              id="productoSearch" 
-              type="text" 
-              [formControl]="searchControl" 
-              placeholder="Escribe para buscar (ej: tarta, pan...)"
-              autocomplete="off"
-            >
-            <div class="product-results" *ngIf="((searchControl.value) || (selectedFamilia$ | async)) && !selectedProducto">
-              <div 
-                *ngFor="let p of filteredProductos$ | async" 
-                class="product-item"
-                (click)="selectProducto(p)"
-              >
-                <span class="family-tag">{{p.familia}}</span> {{p.producto}}
+      <form [formGroup]="pedidoForm" (ngSubmit)="onSubmit()" class="responsive-grid">
+        <!-- Columna Izquierda: Producto y Cantidad -->
+        <div class="column">
+          <div class="form-card">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+              </svg>
+              Selección de Producto
+            </h3>
+            
+            <div class="form-group">
+              <label>Familia (Acceso Rápido)</label>
+              <div class="quick-chips">
+                <div 
+                  *ngFor="let f of familias$ | async" 
+                  class="chip" 
+                  [class.active]="(selectedFamilia$ | async) === f"
+                  (click)="selectFamilia(f)"
+                >
+                  {{f}}
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="productoSearch">Buscar o seleccionar producto</label>
+              <div class="search-wrapper">
+                <input 
+                  id="productoSearch" 
+                  type="text" 
+                  [formControl]="searchControl" 
+                  placeholder="Escribe para buscar..."
+                  autocomplete="off"
+                  (focus)="showResults = true"
+                >
+                <div class="product-results shadow-lg" *ngIf="!selectedProducto && (showResults || (selectedFamilia$ | async) || searchControl.value)">
+                  <div class="products-header" *ngIf="selectedFamilia$ | async as fam">
+                    Familia: <strong>{{fam}}</strong>
+                    <button type="button" class="btn-clear-inline" (click)="selectFamilia(null)">quitar filtro</button>
+                  </div>
+                  <div class="products-container" [class.grid-layout]="selectedFamilia$ | async">
+                    <div 
+                      *ngFor="let p of filteredProductos$ | async" 
+                      class="product-item"
+                      (click)="selectProducto(p)"
+                    >
+                      <span class="family-tag" *ngIf="!(selectedFamilia$ | async)">{{p.familia}}</span>
+                      <span class="name">{{p.producto}}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="selected-badge" *ngIf="selectedProducto">
+                <div class="badge-content">
+                  <span class="label">Producto:</span>
+                  <strong>{{selectedProducto.producto}}</strong>
+                </div>
+                <button type="button" class="btn-clear" (click)="selectedProducto = null; pedidoForm.get('productoBase')?.setValue(''); searchControl.setValue('')">×</button>
+              </div>
+            </div>
+
+            <div class="form-group" *ngIf="selectedProducto && selectedProducto.tallasRaciones && selectedProducto.tallasRaciones.length > 0">
+              <label>Talla / Raciones</label>
+              <div class="quick-chips">
+                <div 
+                  *ngFor="let t of selectedProducto.tallasRaciones" 
+                  class="chip" 
+                  [class.active]="pedidoForm.get('talla')?.value === t"
+                  (click)="pedidoForm.get('talla')?.setValue(t)"
+                >
+                  {{t}}
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Cantidad</label>
+              <div class="cantidad-control">
+                <button type="button" (click)="adjustQuantity(-1)" [disabled]="(pedidoForm.get('cantidad')?.value ?? 0) <= 1">-</button>
+                <input type="number" formControlName="cantidad" readonly>
+                <button type="button" (click)="adjustQuantity(1)">+</button>
               </div>
             </div>
           </div>
-          <div class="selected-badge" *ngIf="selectedProducto">
-            Seleccionado: <strong>{{selectedProducto.familia}} - {{selectedProducto.producto}}</strong>
-            <button type="button" class="btn-clear" (click)="selectedProducto = null; pedidoForm.get('productoBase')?.setValue(''); searchControl.setValue('')">×</button>
-          </div>
-          <div *ngIf="pedidoForm.get('productoBase')?.invalid && pedidoForm.get('productoBase')?.touched" class="error">
-            Debe seleccionar un producto del catálogo.
-          </div>
         </div>
 
-        <div class="form-group" *ngIf="selectedProducto?.tallasRaciones?.length">
-          <label for="talla">Talla / Raciones</label>
-          <select id="talla" formControlName="talla">
-            <option value="">Seleccione tamaño...</option>
-            <option *ngFor="let t of selectedProducto?.tallasRaciones" [value]="t">{{t}}</option>
-          </select>
-          <div *ngIf="pedidoForm.get('talla')?.invalid && pedidoForm.get('talla')?.touched" class="error">
-            Debe seleccionar una talla/ración.
-          </div>
-        </div>
+        <!-- Columna Derecha: Entrega y Cliente -->
+        <div class="column">
+          <div class="form-card">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              Datos de Entrega
+            </h3>
 
-        <div class="form-group">
-          <label for="cantidad">Cantidad</label>
-          <div class="quantity-controls">
-            <button type="button" class="btn-qty" (click)="adjustQuantity(-1)">-</button>
-            <input id="cantidad" type="number" formControlName="cantidad">
-            <button type="button" class="btn-qty" (click)="adjustQuantity(1)">+</button>
-          </div>
-          <div *ngIf="pedidoForm.get('cantidad')?.invalid && pedidoForm.get('cantidad')?.touched" class="error">
-            Ingrese una cantidad válida (mínimo 1).
-          </div>
-        </div>
+            <div class="form-group">
+              <label>Día de Entrega</label>
+              <div class="quick-chips">
+                <div class="chip" (click)="setQuickDate(0)">Hoy</div>
+                <div class="chip" (click)="setQuickDate(1)">Mañana</div>
+                <div class="chip" (click)="setNextDay(6)">Sábado</div>
+                <div class="chip" (click)="setNextDay(0)">Domingo</div>
+              </div>
+            </div>
 
-        <div class="form-group">
-          <label for="fechaEntrega">Fecha de Entrega</label>
-          <div class="date-shortcuts">
-            <button type="button" class="btn-shortcut" (click)="setQuickDate(0)">Hoy</button>
-            <button type="button" class="btn-shortcut" (click)="setQuickDate(1)">Mañana</button>
-            <button type="button" class="btn-shortcut" (click)="setNextDay(6)">Sábado</button>
-            <button type="button" class="btn-shortcut" (click)="setNextDay(0)">Domingo</button>
-          </div>
-          <div class="time-shortcuts">
-            <button type="button" class="btn-shortcut" (click)="setQuickTime('08:00')" title="Primera hora">08:00</button>
-            <button type="button" class="btn-shortcut" (click)="setQuickTime('11:00')" title="Media mañana">11:00</button>
-            <button type="button" class="btn-shortcut" (click)="setQuickTime('13:00')" title="Mediodía">13:00</button>
-            <button type="button" class="btn-shortcut" (click)="setQuickTime('16:30')" title="1ª Tarde">16:30</button>
-            <button type="button" class="btn-shortcut" (click)="setQuickTime('19:00')" title="2ª Tarde">19:00</button>
-          </div>
-          <input id="fechaEntrega" type="datetime-local" formControlName="fechaEntrega">
-          <div *ngIf="pedidoForm.get('fechaEntrega')?.invalid && pedidoForm.get('fechaEntrega')?.touched" class="error">
-            La fecha y hora de entrega son obligatorias.
-          </div>
-        </div>
+            <div class="form-group">
+              <label>Hora de Entrega</label>
+              <div class="quick-chips">
+                <ng-container *ngFor="let t of availableHours">
+                  <div 
+                    *ngIf="isTimeVisible(t)"
+                    class="chip" 
+                    [class.active]="isTimeSelected(t)"
+                    (click)="setQuickTime(t)"
+                  >
+                    {{t}}
+                  </div>
+                </ng-container>
+              </div>
+              <input style="margin-top: 0.75rem" type="datetime-local" formControlName="fechaEntrega">
+            </div>
 
-        <div class="form-group">
-          <label for="nombreCliente">Nombre Cliente</label>
-          <input id="nombreCliente" type="text" formControlName="nombreCliente" placeholder="Ej: Juan Pérez">
-          <div *ngIf="pedidoForm.get('nombreCliente')?.invalid && pedidoForm.get('nombreCliente')?.touched" class="error">
-            El nombre del cliente es obligatorio.
+            <div class="form-group">
+              <label for="nombreCliente">Nombre del Cliente</label>
+              <input id="nombreCliente" type="text" formControlName="nombreCliente" placeholder="Nombre y apellidos">
+            </div>
+
+            <div class="form-group">
+              <label for="notasPastelero">Notas para Obrador</label>
+              <textarea id="notasPastelero" formControlName="notasPastelero" placeholder="Detalles de elaboración..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="notasTienda">Notas para Tienda / Encargos</label>
+              <textarea id="notasTienda" formControlName="notasTienda" placeholder="Detalles de recogida, contacto..."></textarea>
+            </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="notasPastelero">Notas para Pastelero (Opcional)</label>
-          <textarea id="notasPastelero" formControlName="notasPastelero" placeholder="Ej: Sin lactosa, mensaje 'Felicidades'..."></textarea>
-        </div>
-
-        <div class="form-group">
-          <label for="notasTienda">Notas para Tienda (Opcional)</label>
-          <textarea id="notasTienda" formControlName="notasTienda" placeholder="Ej: Paga al recoger..."></textarea>
-        </div>
-
-        <div class="actions">
-          <button type="button" class="btn-secondary" routerLink="/pedidos">Cancelar</button>
-          <button type="submit" class="btn-primary" [disabled]="pedidoForm.invalid || submitting">
-            {{ submitting ? 'Guardando...' : 'Guardar Pedido' }}
-          </button>
+          <div class="submit-container">
+            <button type="submit" class="main-submit" [disabled]="pedidoForm.invalid || submitting">
+              <span *ngIf="!submitting">GUARDAR PEDIDO</span>
+              <span *ngIf="submitting">GUARDANDO...</span>
+            </button>
+          </div>
         </div>
       </form>
 
-      <div *ngIf="successMessage" class="success-alert">
-        {{ successMessage }}
-      </div>
-      
-      <div *ngIf="errorMessage" class="error-alert">
-        {{ errorMessage }}
+      <div class="alerts">
+        <div *ngIf="successMessage" class="alert success">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          {{ successMessage }}
+        </div>
+        <div *ngIf="errorMessage" class="alert error">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          {{ errorMessage }}
+        </div>
       </div>
     </div>
   `,
   styles: [`
-    .form-container { max-width: 500px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; }
-    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1rem; }
-    
-    .search-container { position: relative; }
-    .product-results { 
-      position: absolute; 
-      top: 100%; 
-      left: 0; 
-      right: 0; 
-      background: white; 
-      border: 1px solid #ddd; 
-      border-top: none; 
-      z-index: 10; 
-      max-height: 200px; 
-      overflow-y: auto; 
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    .page-container {
+      padding: 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      background: #f8fafc;
+      min-height: calc(100vh - 64px);
     }
-    .product-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
-    .product-item:hover { background: #f8f9fa; }
-    .family-tag { font-size: 0.7rem; background: #eee; padding: 2px 5px; border-radius: 4px; margin-right: 5px; text-transform: uppercase; color: #666; }
-    
-    .family-shortcuts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 5px; }
-    .family-shortcuts .btn-shortcut.active { background: #d35400; color: white; border-color: #d35400; }
 
-    .selected-badge { 
-      margin-top: 5px; 
-      padding: 8px 12px; 
-      background: #e8f4fd; 
-      border: 1px solid #b8daff; 
-      border-radius: 4px; 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center;
-      font-size: 0.9rem;
-    }
-    .btn-clear { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #dc3545; }
-
-    .quantity-controls { display: flex; gap: 10px; align-items: center; }
-    .quantity-controls input { text-align: center; font-size: 1.2rem; font-weight: bold; }
-    .btn-qty { 
-      background: #34495e; 
-      color: white; 
-      border: none; 
-      width: 40px; 
-      height: 40px; 
-      border-radius: 4px; 
-      font-size: 1.5rem; 
-      cursor: pointer; 
+    .header-section {
+      margin-bottom: 1.5rem;
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 1rem;
+
+      h2 { margin: 0; font-size: 1.5rem; color: #1e293b; }
+      .back-btn {
+        background: white; border: 1px solid #e2e8f0; padding: 0.5rem; border-radius: 10px;
+        display: flex; cursor: pointer; color: #64748b;
+        &:active { transform: scale(0.95); }
+      }
     }
 
-    textarea { min-height: 80px; resize: vertical; }
-    .error { color: red; font-size: 0.8rem; margin-top: 4px; }
-    .actions { display: flex; gap: 10px; margin-top: 20px; }
-    button { padding: 10px 20px; border-radius: 4px; cursor: pointer; border: none; }
-    .btn-primary { background: #d35400; color: white; }
-    .btn-primary:disabled { background: #ccc; }
-    .btn-secondary { background: #eee; }
-    
-    .date-shortcuts, .time-shortcuts { display: flex; gap: 5px; margin-bottom: 5px; overflow-x: auto; padding-bottom: 5px; }
-    .btn-shortcut { 
-      background: #f4f4f4; 
-      border: 1px solid #ddd; 
-      padding: 5px 10px; 
-      border-radius: 4px; 
-      font-size: 0.85rem; 
-      white-space: nowrap;
-      cursor: pointer;
+    .responsive-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      align-items: start;
+      
+      @media (min-width: 768px) {
+        grid-template-columns: 1fr 1fr;
+      }
     }
-    .btn-shortcut:hover { background: #e9ecef; }
-    .btn-shortcut:active { background: #dee2e6; }
 
-    .success-alert { margin-top: 15px; padding: 10px; background: #d4edda; color: #155724; border-radius: 4px; }
-    .error-alert { margin-top: 15px; padding: 10px; background: #f8d7da; color: #721c24; border-radius: 4px; }
+    .form-card {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 1rem;
+
+      h3 {
+        margin-top: 0; margin-bottom: 1.25rem; font-size: 0.9rem;
+        color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;
+        display: flex; align-items: center; gap: 0.5rem;
+      }
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+      label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #334155; font-size: 0.95rem; }
+      input, select, textarea {
+        width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 12px;
+        font-size: 1rem; background-color: #fcfcfd;
+        &:focus { outline: none; border-color: #3b82f6; background-color: white; }
+      }
+      textarea { min-height: 80px; }
+    }
+
+    .quick-chips {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      .chip {
+        padding: 0.6rem 0.8rem; background: #f1f5f9; border: 1px solid #e2e8f0;
+        border-radius: 8px; font-size: 0.85rem; font-weight: 500; color: #475569;
+        cursor: pointer; transition: all 0.2s;
+        &:active { background: #e2e8f0; }
+        &.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+      }
+    }
+
+    .search-wrapper { position: relative; }
+    .product-results {
+      position: absolute; top: 100%; left: 0; right: 0; z-index: 50;
+      background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+      margin-top: 4px; max-height: 350px; overflow-y: auto;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      
+      .products-container.grid-layout {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 0.5rem;
+        padding: 0.75rem;
+
+        .product-item {
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 0.75rem 0.5rem;
+          text-align: center;
+          background: #f8fafc;
+          min-height: 70px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          font-weight: 500;
+          font-size: 0.9rem;
+          line-height: 1.2;
+          border-bottom: 1px solid #e2e8f0;
+
+          &:hover { background: #eff6ff; border-color: #3b82f6; color: #1e40af; }
+          .family-tag { margin-bottom: 4px; margin-right: 0; }
+        }
+      }
+
+      .products-header {
+        padding: 0.75rem 1rem;
+        background: #f1f5f9;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 0.85rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #475569;
+
+        .btn-clear-inline {
+          background: none;
+          border: none;
+          color: #3b82f6;
+          font-size: 0.75rem;
+          cursor: pointer;
+          text-decoration: underline;
+          padding: 0;
+        }
+      }
+
+      .product-item {
+        padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9;
+        display: flex; align-items: center;
+        &:last-child { border-bottom: none; }
+        &:hover { background: #f8fafc; }
+        .family-tag { font-size: 0.7rem; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; margin-right: 8px; color: #64748b; }
+        .name { flex: 1; }
+      }
+    }
+
+    .selected-badge {
+      margin-top: 0.75rem; padding: 0.75rem 1rem; background: #eff6ff;
+      border: 1px solid #bfdbfe; border-radius: 12px; display: flex;
+      justify-content: space-between; align-items: center;
+      .badge-content { font-size: 0.9rem; .label { color: #1e40af; margin-right: 0.5rem; } }
+      .btn-clear { background: none; border: none; font-size: 1.5rem; color: #ef4444; cursor: pointer; }
+    }
+
+    .cantidad-control {
+      display: flex; align-items: center; gap: 1rem;
+      button {
+        width: 48px; height: 48px; border-radius: 12px; border: none;
+        background: #3b82f6; color: white; font-size: 1.5rem;
+        display: flex; align-items: center; justify-content: center; cursor: pointer;
+        &:active { transform: scale(0.95); }
+        &:disabled { background: #cbd5e1; }
+      }
+      input { flex: 1; text-align: center; font-size: 1.25rem; font-weight: bold; }
+    }
+
+    .submit-container {
+      .main-submit {
+        width: 100%; padding: 1rem; background: #059669; color: white;
+        border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 700;
+        cursor: pointer; box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.4);
+        &:active { transform: scale(0.98); }
+        &:disabled { background: #9ca3af; box-shadow: none; }
+      }
+    }
+
+    .alerts {
+      position: fixed; bottom: 1.5rem; left: 1.5rem; right: 1.5rem; z-index: 100;
+      .alert {
+        padding: 1rem; border-radius: 12px; display: flex; align-items: center; gap: 0.75rem;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); margin-top: 0.5rem;
+        &.success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        &.error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+      }
+    }
   `]
 })
 export class AddPedidoComponent implements OnInit {
@@ -233,6 +380,7 @@ export class AddPedidoComponent implements OnInit {
   submitting = false;
   successMessage = '';
   errorMessage = '';
+  showResults = false;
 
   productos$!: Observable<Producto[]>;
   familias$!: Observable<string[]>;
@@ -242,6 +390,9 @@ export class AddPedidoComponent implements OnInit {
   private selectedFamiliaBS = new BehaviorSubject<string | null>(null);
   selectedFamilia$ = this.selectedFamiliaBS.asObservable();
   searchControl = new FormControl('');
+
+  availableHours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:30', '17:00', '18:30', '19:30'];
+  leadTimeMinutes = 120; // 2 horas de margen mínimo para preparación
 
   pedidoForm = this.fb.group({
     productoBase: ['', Validators.required],
@@ -255,8 +406,12 @@ export class AddPedidoComponent implements OnInit {
   });
 
   private getDefaultDate(): string {
+    const now = new Date();
     const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setDate(now.getDate() + 1);
+    
+    // Si ya es tarde para hoy (> 18:00), sugerimos mañana por la mañana
+    // Pero por defecto el código anterior usaba mañana 09:30, lo cual es seguro.
     return `${tomorrow.toISOString().split('T')[0]}T09:30`;
   }
 
@@ -286,22 +441,35 @@ export class AddPedidoComponent implements OnInit {
   }
 
   selectFamilia(f: string | null) {
-    this.selectedFamiliaBS.next(f);
+    if (this.selectedFamiliaBS.value === f) {
+      this.selectedFamiliaBS.next(null);
+    } else {
+      this.selectedFamiliaBS.next(f);
+    }
+    
     if (!this.selectedProducto) {
       this.searchControl.setValue('', { emitEvent: true }); // Trigger search filter
     }
   }
 
   selectProducto(p: Producto) {
+    console.log('Producto seleccionado:', p);
     this.selectedProducto = p;
+    this.showResults = false;
     this.pedidoForm.get('productoBase')?.setValue(p.id);
     this.searchControl.setValue(p.producto, { emitEvent: false });
     
-    if (this.selectedProducto?.tallasRaciones?.length) {
+    // Si solo hay una talla, la seleccionamos automáticamente
+    if (this.selectedProducto?.tallasRaciones?.length === 1) {
+      this.pedidoForm.get('talla')?.setValue(this.selectedProducto.tallasRaciones[0]);
+    } else {
+      this.pedidoForm.get('talla')?.setValue('');
+    }
+
+    if (this.selectedProducto?.tallasRaciones?.length && this.selectedProducto.tallasRaciones.length > 1) {
       this.pedidoForm.get('talla')?.setValidators(Validators.required);
     } else {
       this.pedidoForm.get('talla')?.clearValidators();
-      this.pedidoForm.get('talla')?.setValue('');
     }
     this.pedidoForm.get('talla')?.updateValueAndValidity();
   }
@@ -310,11 +478,17 @@ export class AddPedidoComponent implements OnInit {
     const id = this.pedidoForm.get('productoBase')?.value;
     this.selectedProducto = this.allProductos.find(p => p.id === id) || null;
     
-    if (this.selectedProducto?.tallasRaciones?.length) {
+    if (this.selectedProducto?.tallasRaciones?.length === 1) {
+      this.pedidoForm.get('talla')?.setValue(this.selectedProducto.tallasRaciones[0]);
+    }
+
+    if (this.selectedProducto?.tallasRaciones?.length && this.selectedProducto.tallasRaciones.length > 1) {
       this.pedidoForm.get('talla')?.setValidators(Validators.required);
     } else {
       this.pedidoForm.get('talla')?.clearValidators();
-      this.pedidoForm.get('talla')?.setValue('');
+      if (!this.selectedProducto?.tallasRaciones?.length) {
+        this.pedidoForm.get('talla')?.setValue('');
+      }
     }
     this.pedidoForm.get('talla')?.updateValueAndValidity();
   }
@@ -325,27 +499,62 @@ export class AddPedidoComponent implements OnInit {
     this.pedidoForm.get('cantidad')?.setValue(newVal);
   }
 
+  isTimeVisible(time: string): boolean {
+    const deliveryDateVal = this.pedidoForm.get('fechaEntrega')?.value;
+    if (!deliveryDateVal) return true;
+
+    const [datePart] = deliveryDateVal.split('T');
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+
+    if (datePart !== today) return true;
+
+    const [hours, minutes] = time.split(':').map(Number);
+    const timeDate = new Date();
+    timeDate.setHours(hours, minutes, 0, 0);
+
+    const minTime = new Date(now.getTime() + this.leadTimeMinutes * 60000);
+    return timeDate > minTime;
+  }
+
+  isTimeSelected(time: string): boolean {
+    const val = this.pedidoForm.get('fechaEntrega')?.value;
+    return val ? val.endsWith(time) : false;
+  }
+
   setQuickDate(daysToAdd: number) {
     const currentVal = this.pedidoForm.get('fechaEntrega')?.value || '';
-    const timePart = currentVal.includes('T') ? currentVal.split('T')[1] : '09:30';
+    let timePart = currentVal.includes('T') ? currentVal.split('T')[1] : '09:30';
     
     const date = new Date();
     date.setDate(date.getDate() + daysToAdd);
-    
     const datePart = date.toISOString().split('T')[0];
+
+    // Si es hoy, nos aseguramos de que la hora seleccionada sea visible/válida
+    if (daysToAdd === 0 && !this.isTimeVisible(timePart)) {
+      const firstAvailable = this.availableHours.find(h => this.isTimeVisible(h));
+      timePart = firstAvailable || '19:30';
+    }
+    
     this.pedidoForm.get('fechaEntrega')?.setValue(`${datePart}T${timePart}`);
   }
 
   setNextDay(targetDay: number) {
     const currentVal = this.pedidoForm.get('fechaEntrega')?.value || '';
-    const timePart = currentVal.includes('T') ? currentVal.split('T')[1] : '09:30';
+    let timePart = currentVal.includes('T') ? currentVal.split('T')[1] : '09:30';
     
     const date = new Date();
     const currentDay = date.getDay();
-    let daysToAdd = (targetDay - currentDay + 7) % 7;
+    const daysToAdd = (targetDay - currentDay + 7) % 7;
     
     date.setDate(date.getDate() + daysToAdd);
     const datePart = date.toISOString().split('T')[0];
+
+    if (daysToAdd === 0 && !this.isTimeVisible(timePart)) {
+      const firstAvailable = this.availableHours.find(h => this.isTimeVisible(h));
+      timePart = firstAvailable || '19:30';
+    }
+
     this.pedidoForm.get('fechaEntrega')?.setValue(`${datePart}T${timePart}`);
   }
 
@@ -363,6 +572,17 @@ export class AddPedidoComponent implements OnInit {
     this.errorMessage = '';
     
     const formValue = this.pedidoForm.value;
+
+    // Validación extra para horas de hoy
+    if (formValue.fechaEntrega) {
+      const [d, t] = formValue.fechaEntrega.split('T');
+      if (d === new Date().toISOString().split('T')[0] && !this.isTimeVisible(t)) {
+        this.errorMessage = 'La hora de entrega no es válida (es hoy y ya ha pasado o es muy próxima).';
+        this.submitting = false;
+        return;
+      }
+    }
+
     const productName = this.selectedProducto.producto + (formValue.talla ? ` (${formValue.talla})` : '');
 
     const nuevoPedido = {

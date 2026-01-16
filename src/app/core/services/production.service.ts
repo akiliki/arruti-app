@@ -1,6 +1,6 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal, computed, Injector } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, map, catchError, throwError } from 'rxjs';
+import { Observable, map, catchError, throwError, tap, of, BehaviorSubject } from 'rxjs';
 import { Pedido, ProduccionStats, EstadoPedido } from '../models/pedido.model';
 import { GoogleSheetsAdapter } from '../adapters/google-sheets.adapter';
 import { environment } from '../../../environments/environment';
@@ -13,29 +13,67 @@ export class ProductionService {
   private adapter = inject(GoogleSheetsAdapter);
   private apiUrl = environment.apiUrl;
 
+  // Estado maestro
+  private pedidosState = new BehaviorSubject<Pedido[]>([]);
+  private statsState = new BehaviorSubject<ProduccionStats>({
+    totalPendientes: 0,
+    enHorno: 0,
+    producidosHoy: 0,
+    entregadosHoy: 0
+  });
+
+  // Exponer como Signals para la UI moderna
+  public pedidosSignal = signal<Pedido[]>([]);
+  public statsSignal = signal<ProduccionStats>({
+    totalPendientes: 0,
+    enHorno: 0,
+    producidosHoy: 0,
+    entregadosHoy: 0
+  });
+
+  private pedidosLoaded = false;
+  private statsLoaded = false;
+
+  constructor() {
+    // Sincronizar Subjects con Signals
+    this.pedidosState.subscribe(p => this.pedidosSignal.set(p));
+    this.statsState.subscribe(s => this.statsSignal.set(s));
+  }
+
   getDashboardStats(): Observable<ProduccionStats> {
+    const refresh$ = this.refreshStats();
+    return this.statsLoaded ? this.statsState.asObservable() : refresh$;
+  }
+
+  private refreshStats(): Observable<ProduccionStats> {
     return this.http.get<any>(this.apiUrl).pipe(
       map(response => {
-        if (response.status === 'error') {
-          throw new Error(response.message || 'Error desconocido en el servidor de datos.');
-        }
-        return this.adapter.adaptStats(response);
+        if (response.status === 'error') throw new Error(response.message);
+        const stats = this.adapter.adaptStats(response);
+        this.statsState.next(stats);
+        this.statsLoaded = true;
+        return stats;
       }),
       catchError(error => {
         console.error('Error fetching production stats:', error);
-        const message = error instanceof Error ? error.message : 'No se pudo cargar la información de producción. Por favor, compruebe la configuración del script.';
-        return throwError(() => new Error(message));
+        return throwError(() => new Error('No se pudo cargar la información de producción.'));
       })
     );
   }
 
   getPedidos(): Observable<Pedido[]> {
+    const refresh$ = this.refreshPedidos();
+    return this.pedidosLoaded ? this.pedidosState.asObservable() : refresh$;
+  }
+
+  refreshPedidos(): Observable<Pedido[]> {
     return this.http.get<any>(this.apiUrl).pipe(
       map(response => {
-        if (response.status === 'error') {
-          throw new Error(response.message || 'Error al cargar los pedidos.');
-        }
-        return this.adapter.adaptPedidos(response);
+        if (response.status === 'error') throw new Error(response.message);
+        const pedidos = this.adapter.adaptPedidos(response);
+        this.pedidosState.next(pedidos);
+        this.pedidosLoaded = true;
+        return pedidos;
       }),
       catchError(error => {
         console.error('Error fetching pedidos:', error);
@@ -45,57 +83,75 @@ export class ProductionService {
   }
 
   addPedido(pedido: Partial<Pedido>): Observable<any> {
-    const pedidoConId = {
-      ...pedido,
-      id: pedido.id || crypto.randomUUID()
-    };
+    const id = pedido.id || crypto.randomUUID();
+    
+    // Normalizar fecha para el estado local (Signal/BehaviorSubject)
+    let fechaEntrega = pedido.fechaEntrega || new Date();
+    if (typeof fechaEntrega === 'string') {
+      fechaEntrega = new Date(fechaEntrega);
+    }
+
+    const newPedido: Pedido = {
+      id,
+      producto: pedido.producto || '',
+      cantidad: pedido.cantidad || 0,
+      fechaEntrega,
+      estado: pedido.estado || 'Pendiente',
+      nombreCliente: pedido.nombreCliente || '',
+      notasPastelero: pedido.notasPastelero || '',
+      notasTienda: pedido.notasTienda || ''
+    } as Pedido;
+    
+    // 1. ACTUALIZACIÓN OPTIMISTA
+    const previousPedidos = this.pedidosState.value;
+    this.pedidosState.next([newPedido, ...previousPedidos]);
     
     const payload = {
-      ...this.adapter.prepareForPost(pedidoConId),
+      ...this.adapter.prepareForPost(newPedido),
       action: 'add'
     };
     
-    // Usamos text/plain para evitar problemas de CORS preflight con Google Apps Script
-    const headers = new HttpHeaders({
-      'Content-Type': 'text/plain;charset=utf-8'
-    });
-
-    return this.http.post<any>(this.apiUrl, JSON.stringify(payload), { headers }).pipe(
+    return this.http.post<any>(this.apiUrl, JSON.stringify(payload), {
+      headers: new HttpHeaders({ 'Content-Type': 'text/plain;charset=utf-8' })
+    }).pipe(
       map(response => {
-        if (response.status === 'error') {
-          throw new Error(response.message || 'Error al guardar el pedido.');
-        }
+        if (response.status === 'error') throw new Error(response.message || 'Error en el servidor');
         return response;
       }),
+      tap(() => {
+        this.statsLoaded = false;
+      }),
       catchError(error => {
-        console.error('Error adding pedido:', error);
-        const message = error instanceof Error ? error.message : 'No se pudo guardar el pedido. Por favor, inténtelo de nuevo.';
-        return throwError(() => new Error(message));
+        // 2. ROLLBACK
+        this.pedidosState.next(previousPedidos);
+        return throwError(() => new Error(error.message || 'Error al guardar. Se ha revertido el cambio.'));
       })
     );
   }
 
   updatePedidoStatus(id: string, estado: EstadoPedido): Observable<any> {
-    const payload = {
-      action: 'updateStatus',
-      id,
-      estado
-    };
+    // 1. ACTUALIZACIÓN OPTIMISTA
+    const previousPedidos = this.pedidosState.value;
+    this.pedidosState.next(
+      previousPedidos.map(p => p.id === id ? { ...p, estado } : p)
+    );
 
-    const headers = new HttpHeaders({
-      'Content-Type': 'text/plain;charset=utf-8'
-    });
+    const payload = { action: 'updateStatus', id, estado };
 
-    return this.http.post<any>(this.apiUrl, JSON.stringify(payload), { headers }).pipe(
+    return this.http.post<any>(this.apiUrl, JSON.stringify(payload), {
+      headers: new HttpHeaders({ 'Content-Type': 'text/plain;charset=utf-8' })
+    }).pipe(
       map(response => {
-        if (response.status === 'error') {
-          throw new Error(response.message || 'Error al actualizar el estado.');
-        }
+        if (response.status === 'error') throw new Error(response.message || 'Error en el servidor');
         return response;
       }),
+      tap(() => {
+        this.statsLoaded = false;
+      }),
       catchError(error => {
-        console.error('Error updating status:', error);
-        return throwError(() => new Error('No se pudo actualizar el estado del pedido.'));
+        // 2. ROLLBACK
+        this.pedidosState.next(previousPedidos);
+        return throwError(() => new Error(error.message || 'Error al actualizar. Se ha revertido el cambio.'));
       })
     );
   }

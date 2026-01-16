@@ -1,6 +1,6 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, map, catchError, throwError } from 'rxjs';
+import { Observable, map, catchError, throwError, tap, of, BehaviorSubject } from 'rxjs';
 import { Producto } from '../models/producto.model';
 import { GoogleSheetsAdapter } from '../adapters/google-sheets.adapter';
 import { environment } from '../../../environments/environment';
@@ -13,14 +13,32 @@ export class ProductoService {
   private adapter = inject(GoogleSheetsAdapter);
   private apiUrl = environment.apiUrl;
 
+  // Estado maestro reactivo
+  private productosState = new BehaviorSubject<Producto[]>([]);
+  public productosSignal = signal<Producto[]>([]);
+  
+  private loaded = false;
+
+  constructor() {
+    this.productosState.subscribe(p => this.productosSignal.set(p));
+  }
+
   getProductos(): Observable<Producto[]> {
-    // Usamos un parámetro para indicar que queremos productos
+    if (!this.loaded) {
+      this.refreshProductos().subscribe();
+    }
+    return this.productosState.asObservable();
+  }
+
+  private refreshProductos(): Observable<Producto[]> {
+    // Usamos una petición limpia para evitar problemas de CORS con Google Script
     return this.http.get<any>(`${this.apiUrl}?type=productos`).pipe(
       map(response => {
-        if (response.status === 'error') {
-          throw new Error(response.message || 'Error al cargar los productos.');
-        }
-        return this.adapter.adaptProductos(response);
+        if (response.status === 'error') throw new Error(response.message);
+        const productos = this.adapter.adaptProductos(response);
+        this.productosState.next(productos);
+        this.loaded = true;
+        return productos;
       }),
       catchError(error => {
         console.error('Error fetching productos:', error);
@@ -36,31 +54,29 @@ export class ProductoService {
   }
 
   addProducto(producto: Omit<Producto, 'id'>): Observable<any> {
-    const newProducto: Producto = {
-      ...producto,
-      id: crypto.randomUUID()
-    };
+    const id = crypto.randomUUID();
+    const newProducto: Producto = { ...producto, id };
+    
+    // 1. ACTUALIZACIÓN OPTIMISTA
+    const previousState = this.productosState.value;
+    this.productosState.next([...previousState, newProducto]);
     
     const payload = {
       ...this.adapter.prepareProductoForPost(newProducto),
       action: 'addProduct'
     };
 
-    // Usamos text/plain para evitar problemas de CORS preflight con Google Apps Script
-    const headers = new HttpHeaders({
-      'Content-Type': 'text/plain;charset=utf-8'
-    });
-
-    return this.http.post<any>(this.apiUrl, JSON.stringify(payload), { headers }).pipe(
+    return this.http.post<any>(this.apiUrl, JSON.stringify(payload), {
+      headers: new HttpHeaders({ 'Content-Type': 'text/plain;charset=utf-8' })
+    }).pipe(
       map(response => {
-        if (response.status === 'error') {
-          throw new Error(response.message || 'Error al añadir el producto.');
-        }
+        if (response.status === 'error') throw new Error(response.message);
         return response;
       }),
       catchError(error => {
-        console.error('Error adding producto:', error);
-        return throwError(() => new Error('No se pudo añadir el producto.'));
+        // 2. ROLLBACK
+        this.productosState.next(previousState);
+        return throwError(() => new Error('Error al añadir. Se ha revertido el cambio.'));
       })
     );
   }

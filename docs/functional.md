@@ -21,6 +21,7 @@ Como gestor de la pastelería, quiero ver un resumen en tiempo real del estado d
 **Criterios de Aceptación:**
 * Los datos deben actualizarse al recargar la página.
 * Si no hay conexión o falla la API, debe mostrarse un mensaje de error claro.
+* **Optimismo:** Los indicadores deben reaccionar inmediatamente a los cambios de estado locales.
 
 ### CU-02: Gestión de Catálogo de Productos
 **Estado:** Definido
@@ -48,16 +49,17 @@ Como administrador, quiero gestionar los productos de la pastelería (familias, 
 **Criticidad:** CRÍTICA
 
 **Descripción:**
-Como gestor, quiero crear pedidos seleccionando productos del catálogo para asegurar la consistencia de los datos.
+Como gestor, quiero crear pedidos seleccionando productos del catálogo de forma rápida y visual (interfaz adaptada a tablet/táctil) para asegurar la consistencia y agilidad en tienda.
 
 **Flujo Principal:**
 1. El usuario pulsa "Crear Nuevo Pedido".
-2. El sistema muestra un desplegable con los productos del catálogo.
-3. El usuario selecciona un producto.
-4. Si el producto tiene raciones/tallas definidas, el sistema muestra un segundo desplegable para seleccionar la talla.
-5. El usuario indica la cantidad y la fecha de entrega.
-6. El sistema guarda el pedido.
+2. El sistema muestra una cuadrícula de familias de productos para filtrado rápido.
+3. El usuario selecciona una familia y luego un producto mediante botones táctiles grandes.
+4. Si el producto tiene raciones/tallas definidas, se muestran como "chips" seleccionables.
+5. El sistema rellena automáticamente la fecha de entrega sugerida (mañana).
+6. Al confirmar, el pedido aparece inmediatamente en la lista (UI Optimista) mientras se sincroniza en segundo plano.
 
 **Criterios de Aceptación:**
-* No se puede crear un pedido sin seleccionar un producto válido.
-* Si el producto tiene tallas, debe seleccionarse una.
+* La interfaz debe ser utilizable sin teclado/ratón (target táctil > 44px).
+* Feedback visual inmediato tras la creación.
+* Persistencia en Google Sheets.

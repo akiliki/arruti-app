@@ -29,7 +29,7 @@ interface ProductApiResponse {
     id_producto: string;
     familia: string;
     nombre: string;
-    raciones_tallas: string; // Comma separated string
+    raciones_tallas: string | number; // Can be string or number from Sheets
   }>;
 }
 
@@ -59,12 +59,25 @@ export class GoogleSheetsAdapter {
    * Transforma productos de la API al modelo de dominio
    */
   adaptProductos(response: ProductApiResponse): Producto[] {
-    return response.data.map(item => ({
-      id: item.id_producto,
-      familia: item.familia,
-      producto: item.nombre,
-      tallasRaciones: item.raciones_tallas ? item.raciones_tallas.split(',').map(s => s.trim()) : []
-    }));
+    return (response.data || []).map(item => {
+      let tallas: string[] = [];
+      const val = item.raciones_tallas;
+      
+      if (val !== undefined && val !== null) {
+        const strVal = String(val).trim();
+        if (strVal !== '') {
+          // Aceptamos comas, barras o puntos y coma como separadores
+          tallas = strVal.split(/[,/;|]+/).map(s => s.trim()).filter(s => s !== '');
+        }
+      }
+
+      return {
+        id: item.id_producto,
+        familia: item.familia || 'Sin Familia',
+        producto: item.nombre || 'Sin nombre',
+        tallasRaciones: tallas
+      };
+    });
   }
 
   /**
