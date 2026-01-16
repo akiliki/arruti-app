@@ -34,6 +34,11 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
         </div>
 
         <div class="filter-group">
+          <label>Nombre Cliente:</label>
+          <input type="text" [formControl]="nombreFilter" placeholder="Filtrar por cliente...">
+        </div>
+
+        <div class="filter-group">
           <label>Fecha:</label>
           <input type="date" [formControl]="fechaFilter">
         </div>
@@ -44,27 +49,31 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
           <thead>
             <tr>
               <th>ID</th>
+              <th>Cliente</th>
               <th>Producto</th>
+              <th>Notas</th>
               <th>Cantidad</th>
               <th>Fecha Entrega</th>
               <th>Estado</th>
-              <th>Última Act.</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let pedido of pedidos" [attr.data-testid]="'pedido-row-' + pedido.id">
               <td>{{ pedido.id }}</td>
+              <td>{{ pedido.nombreCliente || '-' }}</td>
               <td>{{ pedido.producto }}</td>
+              <td>
+                <div *ngIf="pedido.notasPastelero" class="note-tag pastelero">Past: {{ pedido.notasPastelero }}</div>
+                <div *ngIf="pedido.notasTienda" class="note-tag tienda">Tnd: {{ pedido.notasTienda }}</div>
+                <span *ngIf="!pedido.notasPastelero && !pedido.notasTienda">-</span>
+              </td>
               <td>{{ pedido.cantidad }}</td>
-              <td>{{ pedido.fechaEntrega | date:'dd/MM/yyyy' }}</td>
+              <td>{{ pedido.fechaEntrega | date:'dd/MM/yyyy HH:mm' }}</td>
               <td>
                 <span class="badge" [ngClass]="pedido.estado.toLowerCase().replace(' ', '-')">
                   {{ pedido.estado }}
                 </span>
-              </td>
-              <td class="timestamp">
-                {{ pedido.fechaActualizacion ? (pedido.fechaActualizacion | date:'dd/MM HH:mm') : '-' }}
               </td>
               <td>
                 <button class="btn-action" [routerLink]="['/pedidos', pedido.id, 'estado']">
@@ -105,6 +114,19 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
     .badge.en-proceso { background: #cce5ff; color: #004085; }
     .badge.finalizado { background: #d4edda; color: #155724; }
 
+    .note-tag {
+      font-size: 0.75rem;
+      padding: 2px 5px;
+      border-radius: 4px;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 150px;
+    }
+    .note-tag.pastelero { background: #fdf2f2; color: #9b1c1c; border: 1px solid #f8d7da; }
+    .note-tag.tienda { background: #f0f9ff; color: #075985; border: 1px solid #bae6fd; }
+
     .loading-state, .empty-state { padding: 40px; text-align: center; color: #666; }
     
     .btn-action {
@@ -127,6 +149,7 @@ export class PedidosListComponent implements OnInit {
   estadoFilter = new FormControl('');
   productoFilter = new FormControl('');
   fechaFilter = new FormControl('');
+  nombreFilter = new FormControl('');
 
   private refresh$ = new BehaviorSubject<void>(undefined);
   updatingId: string | null = null;
@@ -140,14 +163,16 @@ export class PedidosListComponent implements OnInit {
     const estado$ = this.estadoFilter.valueChanges.pipe(startWith(''));
     const producto$ = this.productoFilter.valueChanges.pipe(startWith(''));
     const fecha$ = this.fechaFilter.valueChanges.pipe(startWith(''));
+    const nombre$ = this.nombreFilter.valueChanges.pipe(startWith(''));
 
-    this.filteredPedidos$ = combineLatest([pedidos$, estado$, producto$, fecha$]).pipe(
-      map(([pedidos, estado, producto, fecha]) => {
+    this.filteredPedidos$ = combineLatest([pedidos$, estado$, producto$, fecha$, nombre$]).pipe(
+      map(([pedidos, estado, producto, fecha, nombre]) => {
         return pedidos.filter(p => {
           const matchEstado = !estado || p.estado === estado;
           const matchProducto = !producto || p.producto.toLowerCase().includes(producto.toLowerCase());
           const matchFecha = !fecha || this.formatDate(p.fechaEntrega) === fecha;
-          return matchEstado && matchProducto && matchFecha;
+          const matchNombre = !nombre || (p.nombreCliente && p.nombreCliente.toLowerCase().includes(nombre.toLowerCase()));
+          return matchEstado && matchProducto && matchFecha && matchNombre;
         });
       })
     );

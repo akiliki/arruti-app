@@ -42,3 +42,22 @@ Como administrador, quiero gestionar los productos de la pastelería (familias, 
 **Criterios de Aceptación:**
 * Cada producto debe tener al menos una familia y un nombre.
 * Los tamaños/raciones son opcionales pero recomendados para productos divisibles.
+
+### CU-03: Creación de Pedidos
+**Estado:** En Desarrollo
+**Criticidad:** CRÍTICA
+
+**Descripción:**
+Como gestor, quiero crear pedidos seleccionando productos del catálogo para asegurar la consistencia de los datos.
+
+**Flujo Principal:**
+1. El usuario pulsa "Crear Nuevo Pedido".
+2. El sistema muestra un desplegable con los productos del catálogo.
+3. El usuario selecciona un producto.
+4. Si el producto tiene raciones/tallas definidas, el sistema muestra un segundo desplegable para seleccionar la talla.
+5. El usuario indica la cantidad y la fecha de entrega.
+6. El sistema guarda el pedido.
+
+**Criterios de Aceptación:**
+* No se puede crear un pedido sin seleccionar un producto válido.
+* Si el producto tiene tallas, debe seleccionarse una.

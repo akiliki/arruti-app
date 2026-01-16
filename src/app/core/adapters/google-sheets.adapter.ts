@@ -11,6 +11,9 @@ interface ApiResponse {
     fecha: string;
     estado_actual: string;
     fecha_actualizacion?: string;
+    nombre_cliente?: string;
+    notas_pastelero?: string;
+    notas_tienda?: string;
   }>;
   stats: {
     pendientes: number;
@@ -44,7 +47,10 @@ export class GoogleSheetsAdapter {
       cantidad: item.cantidad,
       fechaEntrega: new Date(item.fecha),
       estado: this.mapEstado(item.estado_actual),
-      fechaActualizacion: item.fecha_actualizacion ? new Date(item.fecha_actualizacion) : undefined
+      fechaActualizacion: item.fecha_actualizacion ? new Date(item.fecha_actualizacion) : undefined,
+      nombreCliente: item.nombre_cliente,
+      notasPastelero: item.notas_pastelero,
+      notasTienda: item.notas_tienda
     }));
   }
 
@@ -99,7 +105,10 @@ export class GoogleSheetsAdapter {
       producto: pedido.producto,
       cantidad: pedido.cantidad,
       fechaEntrega: pedido.fechaEntrega instanceof Date ? pedido.fechaEntrega.toISOString() : pedido.fechaEntrega,
-      estado: pedido.estado || 'Pendiente'
+      estado: pedido.estado || 'Pendiente',
+      nombre_cliente: pedido.nombreCliente || '',
+      notas_pastelero: pedido.notasPastelero || '',
+      notas_tienda: pedido.notasTienda || ''
     };
   }
 

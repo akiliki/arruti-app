@@ -48,7 +48,10 @@ function doGet(e) {
       cantidad: row[2],
       fecha: row[3],
       estado_actual: row[4],
-      fecha_actualizacion: row[5] || null
+      fecha_act: row[5],
+      nombre_cliente: row[6],
+      notas_pastelero: row[7],
+      notas_tienda: row[8]
     }));
 
     // Cálculo de estadísticas
@@ -128,14 +131,26 @@ function handleAddPedido(sheet, pedido) {
   const lastRow = sheet.getLastRow();
   const id = pedido.id || "P-" + (lastRow + 1).toString().padStart(4, '0');
   
-  // Preparar fila: ID, Producto, Cantidad, Fecha, Estado, Fecha Actualización
+  // Mapeo seguro de las propiedades del payload (snake_case o camelCase)
+  const prod = pedido.producto;
+  const cant = pedido.cantidad;
+  const fecha = pedido.fechaEntrega;
+  const est = pedido.estado || 'Pendiente';
+  const cli = pedido.nombre_cliente || pedido.nombreCliente || '';
+  const noteP = pedido.notas_pastelero || pedido.notasPastelero || '';
+  const noteT = pedido.notas_tienda || pedido.notasTienda || '';
+
+  // Preparar fila: ID, Producto, Cantidad, Fecha, Estado, Fecha Actualización, Cliente, Notas Pastelero, Notas Tienda
   const newRow = [
     id,
-    pedido.producto,
-    pedido.cantidad,
-    pedido.fechaEntrega,
-    pedido.estado || 'Pendiente',
-    new Date() // Timestamp inicial
+    prod,
+    cant,
+    fecha,
+    est,
+    new Date(), // Timestamp inicial
+    cli,
+    noteP,
+    noteT
   ];
 
   sheet.appendRow(newRow);

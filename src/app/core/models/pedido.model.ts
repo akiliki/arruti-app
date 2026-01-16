@@ -7,6 +7,9 @@ export interface Pedido {
   fechaEntrega: Date;
   estado: EstadoPedido;
   fechaActualizacion?: Date;
+  nombreCliente?: string;
+  notasPastelero?: string;
+  notasTienda?: string;
 }
 
 export interface ProduccionStats {

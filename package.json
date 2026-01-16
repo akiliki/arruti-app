@@ -8,7 +8,9 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:backend": "node scripts/test-backend.js",
-    "test:e2e": "npx playwright test"
+    "test:e2e": "npx playwright test",
+    "predeploy": "ng build --base-href /arruti-app/",
+    "deploy": "npx angular-cli-ghpages --dir=dist/arruti-app/browser"
   },
   "private": true,
   "dependencies": {
