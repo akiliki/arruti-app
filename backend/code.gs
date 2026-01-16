@@ -5,12 +5,18 @@
 // CONFIGURACIÓN: ID de tu Google Sheet
 const SPREADSHEET_ID = '1ECzAYLymvMzKq_lG1FVZ_J3Fx4jMv5nD9gQNpCeUCsc'; 
 
-function doGet() {
+function doGet(e) {
   try {
     let ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 
     if (!ss) {
       throw new Error("No se pudo acceder a la hoja de cálculo con el ID proporcionado.");
+    }
+
+    const type = (e && e.parameter && e.parameter.type) || 'pedidos';
+
+    if (type === 'productos') {
+      return handleGetProductos(ss);
     }
     
     const sheetPedidos = ss.getSheetByName('Pedidos');
@@ -72,16 +78,32 @@ function createResponse(content) {
 }
 
 /**
- * Maneja las peticiones POST para añadir nuevos pedidos
+ * Maneja las peticiones POST para añadir nuevos pedidos o productos
  */
 function doPost(e) {
   try {
+    if (!e || !e.postData || !e.postData.contents) {
+      throw new Error("No se recibieron datos en la petición POST.");
+    }
+
     const payload = JSON.parse(e.postData.contents);
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheetPedidos = ss.getSheetByName('Pedidos');
     
+    if (!ss) {
+      throw new Error("No se pudo acceder a la hoja de cálculo.");
+    }
+
+    if (payload.action === 'addProduct') {
+      const sheetProductos = ss.getSheetByName('Productos');
+      if (!sheetProductos) {
+        throw new Error("La hoja 'Productos' no existe. Por favor, créala en tu Google Sheet.");
+      }
+      return handleAddProducto(sheetProductos, payload);
+    }
+
+    const sheetPedidos = ss.getSheetByName('Pedidos');
     if (!sheetPedidos) {
-      throw new Error("Hoja 'Pedidos' no encontrada.");
+      throw new Error("La hoja 'Pedidos' no existe.");
     }
 
     if (payload.action === 'updateStatus') {
@@ -94,7 +116,7 @@ function doPost(e) {
   } catch (e) {
     return createResponse({
       status: "error",
-      message: "Error en doPost: " + e.message
+      message: e.message || "Error desconocido en doPost"
     });
   }
 }
@@ -146,9 +168,58 @@ function handleUpdateStatus(sheet, payload) {
     }
   }
   
-  throw new Error("Pedido con ID " + idToUpdate + " no encontrado.");
+  throw new Error("Pedido no encontrado para actualizar.");
 }
 
+
+
+/**
+ * Obtiene la lista de productos
+ */
+function handleGetProductos(ss) {
+  const sheet = ss.getSheetByName('Productos');
+  if (!sheet) {
+    return createResponse({ status: "error", message: "Hoja 'Productos' no encontrada." });
+  }
+
+  const values = sheet.getDataRange().getValues();
+  if (values.length < 2) {
+    return createResponse({ status: "success", data: [] });
+  }
+
+  const rows = values.slice(1);
+  const data = rows.map(row => ({
+    id_producto: row[0],
+    familia: row[1],
+    nombre: row[2],
+    raciones_tallas: row[3]
+  }));
+
+  return createResponse({
+    status: "success",
+    data: data
+  });
+}
+
+/**
+ * Añade un nuevo producto
+ */
+function handleAddProducto(sheet, payload) {
+  const newRow = [
+    payload.id_producto,
+    payload.familia,
+    payload.nombre,
+    payload.raciones_tallas
+  ];
+
+  sheet.appendRow(newRow);
+
+  return createResponse({
+    status: "success",
+    message: "Producto añadido correctamente",
+    id: payload.id_producto
+  });
+}
 /**
  * Función para probar y autorizar permisos
  */

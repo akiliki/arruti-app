@@ -1,5 +1,10 @@
 # Documentación Técnica - Pastelería Arruti
 
+## Reglas de Datos
+
+### Identificadores (IDs)
+Todos los identificadores únicos (IDs) deben ser generados por el cliente (quien realiza la llamada) utilizando el estándar **UUID (v4)**. La base de datos (Google Sheets) almacenará estos IDs como strings.
+
 ## Integraciones: Google Sheets
 
 El sistema utiliza Google Sheets como base de datos centralizada.
@@ -23,11 +28,20 @@ El sistema utiliza Google Sheets como base de datos centralizada.
 | Hora_Inicio | DateTime | Entrada a producción |
 | Fase | String | Preparación, Horno, Decoración |
 
+#### Hoja: `Productos`
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| ID_Producto | String | UUID (v4) |
+| Familia | String | Categoría (Bollos, Pasteles, etc.) |
+| Nombre | String | Nombre comercial |
+| Raciones_Tallas | String | Lista separada por comas |
+
 ## Contrato de API (Intercambio de Datos)
 
 El middleware (Google Apps Script) expondrá un endpoint GET que devuelve la información en el siguiente formato JSON:
 
 ### GET /produccion-diaria
+...
 ```json
 {
   "status": "success",
@@ -46,6 +60,21 @@ El middleware (Google Apps Script) expondrá un endpoint GET que devuelve la inf
     "horno": 2,
     "finalizados": 15
   }
+}
+```
+
+### GET /productos
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id_producto": "uuid-1234",
+      "familia": "Pastelería",
+      "nombre": "Tarta de Queso",
+      "raciones_tallas": "4p, 6p, 8p"
+    }
+  ]
 }
 ```
 

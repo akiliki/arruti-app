@@ -16,5 +16,13 @@ export const routes: Routes = [
   {
     path: 'pedidos/:id/estado',
     loadComponent: () => import('./features/pedidos/update-status.component').then(m => m.UpdateStatusComponent)
+  },
+  {
+    path: 'productos',
+    loadComponent: () => import('./features/productos/productos-list.component').then(m => m.ProductosListComponent)
+  },
+  {
+    path: 'nuevo-producto',
+    loadComponent: () => import('./features/productos/add-producto.component').then(m => m.AddProductoComponent)
   }
 ];

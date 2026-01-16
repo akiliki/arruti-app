@@ -45,8 +45,13 @@ export class ProductionService {
   }
 
   addPedido(pedido: Partial<Pedido>): Observable<any> {
+    const pedidoConId = {
+      ...pedido,
+      id: pedido.id || crypto.randomUUID()
+    };
+    
     const payload = {
-      ...this.adapter.prepareForPost(pedido),
+      ...this.adapter.prepareForPost(pedidoConId),
       action: 'add'
     };
     

@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DashboardComponent } from './dashboard.component';
 import { ProductionService } from '../../core/services/production.service';
 import { of, throwError } from 'rxjs';
+import { provideRouter } from '@angular/router';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -23,7 +24,8 @@ describe('DashboardComponent', () => {
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
       providers: [
-        { provide: ProductionService, useValue: mockProductionService }
+        { provide: ProductionService, useValue: mockProductionService },
+        provideRouter([])
       ]
     })
     .compileComponents();

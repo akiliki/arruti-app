@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Pedido, ProduccionStats, EstadoPedido } from '../models/pedido.model';
+import { Producto } from '../models/producto.model';
 
 interface ApiResponse {
   status: string;
@@ -16,6 +17,16 @@ interface ApiResponse {
     horno: number;
     finalizados: number;
   };
+}
+
+interface ProductApiResponse {
+  status: string;
+  data: Array<{
+    id_producto: string;
+    familia: string;
+    nombre: string;
+    raciones_tallas: string; // Comma separated string
+  }>;
 }
 
 @Injectable({
@@ -35,6 +46,30 @@ export class GoogleSheetsAdapter {
       estado: this.mapEstado(item.estado_actual),
       fechaActualizacion: item.fecha_actualizacion ? new Date(item.fecha_actualizacion) : undefined
     }));
+  }
+
+  /**
+   * Transforma productos de la API al modelo de dominio
+   */
+  adaptProductos(response: ProductApiResponse): Producto[] {
+    return response.data.map(item => ({
+      id: item.id_producto,
+      familia: item.familia,
+      producto: item.nombre,
+      tallasRaciones: item.raciones_tallas ? item.raciones_tallas.split(',').map(s => s.trim()) : []
+    }));
+  }
+
+  /**
+   * Prepara un producto para ser enviado a la API
+   */
+  prepareProductoForPost(producto: Producto): any {
+    return {
+      id_producto: producto.id,
+      familia: producto.familia,
+      nombre: producto.producto,
+      raciones_tallas: producto.tallasRaciones.join(', ')
+    };
   }
 
   /**
@@ -60,6 +95,7 @@ export class GoogleSheetsAdapter {
    */
   prepareForPost(pedido: Partial<Pedido>): any {
     return {
+      id: pedido.id,
       producto: pedido.producto,
       cantidad: pedido.cantidad,
       fechaEntrega: pedido.fechaEntrega instanceof Date ? pedido.fechaEntrega.toISOString() : pedido.fechaEntrega,

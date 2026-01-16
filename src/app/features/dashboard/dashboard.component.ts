@@ -18,9 +18,8 @@ interface DashboardState {
   template: `
     <div class="dashboard-container">
       <div class="header">
-        <h1>Panel de Producción - Pastelería Arruti</h1>
+        <h1>Panel de Producción</h1>
         <div class="actions">
-          <button class="btn-secondary" routerLink="/pedidos">Ver Todos los Pedidos</button>
           <button class="btn-new" routerLink="/nuevo-pedido">Crear Nuevo Pedido</button>
         </div>
       </div>

@@ -21,3 +21,24 @@ Como gestor de la pastelería, quiero ver un resumen en tiempo real del estado d
 **Criterios de Aceptación:**
 * Los datos deben actualizarse al recargar la página.
 * Si no hay conexión o falla la API, debe mostrarse un mensaje de error claro.
+
+### CU-02: Gestión de Catálogo de Productos
+**Estado:** Definido
+**Criticidad:** ALTA
+
+**Descripción:**
+Como administrador, quiero gestionar los productos de la pastelería (familias, nombres y tamaños/raciones) para mantener el catálogo actualizado.
+
+**Flujo Principal (Añadir):**
+1. El usuario accede a la sección de Productos.
+2. El usuario pulsa "Añadir Producto".
+3. Completa los datos: Familia (ej: Bollería), Producto (ej: Croissant), Raciones o Tamaños (lista separada por comas).
+4. El sistema genera un UUID para el producto y lo guarda.
+
+**Flujo Principal (Listar):**
+1. El usuario accede a la sección de Productos.
+2. El sistema muestra la lista de productos agrupados o filtrables por Familia.
+
+**Criterios de Aceptación:**
+* Cada producto debe tener al menos una familia y un nombre.
+* Los tamaños/raciones son opcionales pero recomendados para productos divisibles.
