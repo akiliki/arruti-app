@@ -35,7 +35,7 @@ function doGet(e) {
       return createResponse({
         status: "success",
         data: [],
-        stats: { pendientes: 0, horno: 0, finalizados: 0 }
+        stats: { pendientes: 0, horno: 0, producidos: 0, entregados: 0 }
       });
     }
 
@@ -58,7 +58,8 @@ function doGet(e) {
     const stats = {
       pendientes: data.filter(p => String(p.estado_actual).trim() === 'Pendiente').length,
       horno: data.filter(p => String(p.estado_actual).trim() === 'En Proceso').length,
-      finalizados: data.filter(p => String(p.estado_actual).trim() === 'Finalizado').length
+      producidos: data.filter(p => ['Producido', 'Finalizado'].includes(String(p.estado_actual).trim())).length,
+      entregados: data.filter(p => String(p.estado_actual).trim() === 'Entregado').length
     };
 
     return createResponse({
