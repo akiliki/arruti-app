@@ -29,6 +29,12 @@ export class ProductoService {
     );
   }
 
+  getProductoById(id: string): Observable<Producto | undefined> {
+    return this.getProductos().pipe(
+      map(productos => productos.find(p => p.id === id))
+    );
+  }
+
   addProducto(producto: Omit<Producto, 'id'>): Observable<any> {
     const newProducto: Producto = {
       ...producto,

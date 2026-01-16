@@ -34,14 +34,16 @@ describe('ProductionService', () => {
       stats: {
         pendientes: 5,
         horno: 2,
-        finalizados: 10
+        producidos: 10,
+        entregados: 3
       }
     };
 
     service.getDashboardStats().subscribe(stats => {
       expect(stats.totalPendientes).toBe(5);
       expect(stats.enHorno).toBe(2);
-      expect(stats.finalizadosHoy).toBe(10);
+      expect(stats.producidosHoy).toBe(10);
+      expect(stats.entregadosHoy).toBe(3);
       done();
     });
 

@@ -1,4 +1,4 @@
-export type EstadoPedido = 'Pendiente' | 'En Proceso' | 'Finalizado';
+export type EstadoPedido = 'Pendiente' | 'En Proceso' | 'Producido' | 'Entregado';
 
 export interface Pedido {
   id: string;
@@ -15,5 +15,6 @@ export interface Pedido {
 export interface ProduccionStats {
   totalPendientes: number;
   enHorno: number;
-  finalizadosHoy: number;
+  producidosHoy: number;
+  entregadosHoy: number;
 }

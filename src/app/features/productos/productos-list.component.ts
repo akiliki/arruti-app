@@ -39,6 +39,7 @@ import { Observable, combineLatest, map, startWith } from 'rxjs';
               <th>Familia</th>
               <th>Producto</th>
               <th>Raciones/Tallas</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -46,6 +47,11 @@ import { Observable, combineLatest, map, startWith } from 'rxjs';
               <td><span class="badge">{{p.familia}}</span></td>
               <td><strong>{{p.producto}}</strong></td>
               <td>{{p.tallasRaciones.join(', ') || '-'}}</td>
+              <td>
+                <button class="btn-detail" [routerLink]="['/productos', p.id]">
+                  Ver detalle
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -76,6 +82,18 @@ import { Observable, combineLatest, map, startWith } from 'rxjs';
     .badge { background: #e3f2fd; color: #1976d2; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600; }
     .btn-new { background: #4caf50; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; font-weight: 600; text-decoration: none; }
     .btn-new:hover { background: #45a049; }
+
+    .btn-detail {
+      background: #34495e;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .btn-detail:hover { background: #2c3e50; }
     
     .empty-state, .loading { text-align: center; padding: 3rem; color: #666; }
   `]

@@ -18,7 +18,8 @@ interface ApiResponse {
   stats: {
     pendientes: number;
     horno: number;
-    finalizados: number;
+    producidos: number;
+    entregados: number;
   };
 }
 
@@ -86,13 +87,15 @@ export class GoogleSheetsAdapter {
       return {
         totalPendientes: 0,
         enHorno: 0,
-        finalizadosHoy: 0
+        producidosHoy: 0,
+        entregadosHoy: 0
       };
     }
     return {
       totalPendientes: response.stats.pendientes ?? 0,
       enHorno: response.stats.horno ?? 0,
-      finalizadosHoy: response.stats.finalizados ?? 0
+      producidosHoy: response.stats.producidos ?? 0,
+      entregadosHoy: response.stats.entregados ?? 0
     };
   }
 
@@ -116,7 +119,9 @@ export class GoogleSheetsAdapter {
     switch (estado) {
       case 'Pendiente': return 'Pendiente';
       case 'En Proceso': return 'En Proceso';
-      case 'Finalizado': return 'Finalizado';
+      case 'Producido': return 'Producido';
+      case 'Entregado': return 'Entregado';
+      case 'Finalizado': return 'Producido'; // Compatibilidad con datos antiguos
       default: return 'Pendiente';
     }
   }

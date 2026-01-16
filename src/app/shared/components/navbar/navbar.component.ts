@@ -9,11 +9,11 @@ import { RouterModule } from '@angular/router';
   template: `
     <nav class="navbar">
       <div class="navbar-brand">
-        <a routerLink="/" class="logo">Pastelería Arruti</a>
+        <a routerLink="/pedidos" class="logo">Pastelería Arruti</a>
       </div>
       <ul class="navbar-nav">
-        <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Dashboard</a></li>
-        <li><a routerLink="/pedidos" routerLinkActive="active">Pedidos</a></li>
+        <li><a routerLink="/pedidos" routerLinkActive="active">Tienda</a></li>
+        <li><a routerLink="/obrador" routerLinkActive="active">Obrador</a></li>
         <li><a routerLink="/productos" routerLinkActive="active">Catálogo</a></li>
       </ul>
     </nav>

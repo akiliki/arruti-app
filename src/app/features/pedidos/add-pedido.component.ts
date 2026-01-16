@@ -127,7 +127,7 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith } from 
         </div>
 
         <div class="actions">
-          <button type="button" class="btn-secondary" routerLink="/">Cancelar</button>
+          <button type="button" class="btn-secondary" routerLink="/pedidos">Cancelar</button>
           <button type="submit" class="btn-primary" [disabled]="pedidoForm.invalid || submitting">
             {{ submitting ? 'Guardando...' : 'Guardar Pedido' }}
           </button>
@@ -378,7 +378,7 @@ export class AddPedidoComponent implements OnInit {
     this.productionService.addPedido(nuevoPedido as any).subscribe({
       next: () => {
         this.successMessage = 'Pedido guardado correctamente. Redirigiendo...';
-        setTimeout(() => this.router.navigate(['/']), 2000);
+        setTimeout(() => this.router.navigate(['/pedidos']), 2000);
       },
       error: (err) => {
         this.errorMessage = err.message;
