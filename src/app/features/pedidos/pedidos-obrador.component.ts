@@ -39,11 +39,42 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
           </div>
         </div>
         <div class="filter-group">
-          <label>Ver solo:</label>
-          <div class="toggle-group">
-            <button class="btn-toggle" [class.active]="showOnlyPending" (click)="togglePending()">
-              En Producción / Pendiente
+          <label>Estados:</label>
+          <div class="filter-chips" *ngIf="counts$ | async as counts">
+            <button class="chip" [class.active]="isStatusActive('Pendiente')" (click)="toggleStatus('Pendiente')">
+              Falta <span class="count">{{counts.falta}}</span>
             </button>
+            <button class="chip" [class.active]="isStatusActive('En Proceso')" (click)="toggleStatus('En Proceso')">
+              En curso <span class="count">{{counts.enCurso}}</span>
+            </button>
+            <button class="chip" [class.active]="isStatusActive('Producido')" (click)="toggleStatus('Producido')">
+              Terminado <span class="count">{{counts.terminado}}</span>
+            </button>
+          </div>
+        </div>
+        <div class="filter-group settings">
+          <label>Alerta Próximos:</label>
+          <select [value]="upcomingThresholdHours" (change)="changeThreshold(+$any($event.target).value)">
+            <option [value]="2">Siguientes 2h</option>
+            <option [value]="4">Siguientes 4h</option>
+            <option [value]="8">Siguientes 8h</option>
+            <option [value]="24">Mañana (24h)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="alerts-section" *ngIf="upcomingPedidos$ | async as upcoming">
+        <div class="alert-header" (click)="showUpcomingList = !showUpcomingList">
+          <span class="alert-icon">⚠️</span>
+          <h3>Pedidos próximos sin empezar ({{ upcoming.length }})</h3>
+          <span class="chevron">{{ showUpcomingList ? '▼' : '▶' }}</span>
+        </div>
+        
+        <div class="upcoming-scroll" *ngIf="showUpcomingList && upcoming.length > 0">
+          <div *ngFor="let p of upcoming" class="upcoming-mini-card" (click)="setFechaToPedido(p)">
+            <span class="time">{{ p.fechaEntrega | date:'HH:mm' }}</span>
+            <span class="name">{{ p.producto }}</span>
+            <span class="qty">{{ p.cantidad }}u.</span>
           </div>
         </div>
       </div>
@@ -62,6 +93,7 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
           <div class="card-body">
             <div class="quantity">{{ pedido.cantidad }}u.</div>
             <div class="product-name">{{ pedido.producto }}</div>
+            <div *ngIf="pedido.nombreCliente" class="client-name">{{ pedido.nombreCliente }}</div>
             
             <div *ngIf="pedido.notasPastelero" class="baker-notes">
               <strong>NOTA:</strong> {{ pedido.notasPastelero }}
@@ -151,8 +183,74 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
 
     select { padding: 10px; border-radius: 6px; border: 1px solid #ddd; min-width: 150px; }
     
-    .btn-toggle { padding: 8px 15px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; }
-    .btn-toggle.active { background: #34495e; color: white; border-color: #34495e; }
+    .filter-chips { display: flex; gap: 8px; }
+    .chip { 
+      padding: 8px 16px; 
+      border: 1px solid #ddd; 
+      background: white; 
+      border-radius: 20px; 
+      cursor: pointer; 
+      font-size: 0.9rem;
+      color: #666;
+      transition: all 0.2s;
+      width: auto;
+    }
+    .chip:hover { background: #f8f9fa; }
+    .chip.active { background: #34495e; color: white; border-color: #34495e; }
+    .chip .count { 
+      background: #eee; 
+      color: #777; 
+      padding: 1px 6px; 
+      border-radius: 10px; 
+      font-size: 0.75rem; 
+      margin-left: 5px; 
+      font-weight: bold;
+    }
+    .chip.active .count { background: rgba(255,255,255,0.2); color: white; }
+
+    .alerts-section {
+      background: #fff5f5;
+      border: 1px solid #feb2b2;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      overflow: hidden;
+    }
+    .alert-header {
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      background: #fff5f5;
+    }
+    .alert-header h3 { margin: 0; font-size: 1rem; color: #c53030; flex-grow: 1; }
+    .alert-icon { font-size: 1.2rem; }
+    .chevron { color: #c53030; font-size: 0.8rem; }
+    
+    .upcoming-scroll {
+      display: flex;
+      gap: 12px;
+      padding: 0 15px 15px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+    }
+    .upcoming-mini-card {
+      background: white;
+      border: 1px solid #feb2b2;
+      border-left: 4px solid #f56565;
+      padding: 10px 15px;
+      border-radius: 8px;
+      min-width: 200px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .upcoming-mini-card:hover { background: #fffaf0; }
+    .upcoming-mini-card .time { font-weight: 900; color: #c53030; font-size: 1.1rem; }
+    .upcoming-mini-card .name { font-size: 0.9rem; font-weight: 600; color: #2d3748; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .upcoming-mini-card .qty { font-size: 0.8rem; color: #718096; }
 
     .production-grid { 
       display: grid; 
@@ -187,7 +285,8 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
 
     .card-body { padding: 15px; flex-grow: 1; }
     .quantity { font-size: 1.8rem; font-weight: 800; color: #d35400; line-height: 1; margin-bottom: 5px; }
-    .product-name { font-size: 1.2rem; font-weight: bold; color: #2c3e50; margin-bottom: 10px; }
+    .product-name { font-size: 1.2rem; font-weight: bold; color: #2c3e50; margin-bottom: 2px; }
+    .client-name { font-size: 0.9rem; color: #7f8c8d; margin-bottom: 10px; font-style: italic; }
     
     .baker-notes { 
       background: #fff9c4; 
@@ -223,12 +322,20 @@ export class PedidosObradorComponent implements OnInit {
   private refresh$ = new BehaviorSubject<void>(undefined);
   updatingId: string | null = null;
   isRefreshing = true;
-  showOnlyPending = true;
+  
+  // Configuración de alertas
+  upcomingThresholdHours = 4;
+  showUpcomingList = true;
+  
+  // Filtros de estado
+  activeStatuses: EstadoPedido[] = ['Pendiente', 'En Proceso'];
   
   familiaFilter = new FormControl('');
   fechaFilter = new FormControl(this.formatDate(new Date()));
   familias$: Observable<string[]>;
   filteredPedidos$!: Observable<Pedido[]>;
+  upcomingPedidos$!: Observable<Pedido[]>;
+  counts$!: Observable<{ falta: number, enCurso: number, terminado: number }>;
 
   constructor() {
     this.familias$ = this.productoService.getProductos().pipe(
@@ -241,27 +348,52 @@ export class PedidosObradorComponent implements OnInit {
       switchMap(() => this.productionService.getPedidos())
     );
 
-    this.filteredPedidos$ = combineLatest([
+    const baseFiltered$ = combineLatest([
       pedidos$,
       this.familiaFilter.valueChanges.pipe(startWith(this.familiaFilter.value)),
       this.fechaFilter.valueChanges.pipe(startWith(this.fechaFilter.value)),
     ]).pipe(
       map(([pedidos, familia, fecha]) => {
         return pedidos
-          .filter(p => p.estado !== 'Entregado')
           .filter(p => !familia || p.producto.startsWith(familia) || this.belongsToFamilia(p, familia))
-          .filter(p => !fecha || this.formatDate(p.fechaEntrega) === fecha)
-          .filter(p => {
-            if (!this.showOnlyPending) return true;
-            // Si hay filtro de pendientes, solo mostramos Pendiente/En Proceso
-            return p.estado === 'Pendiente' || p.estado === 'En Proceso';
-          })
+          .filter(p => !fecha || this.formatDate(p.fechaEntrega) === fecha);
+      })
+    );
+
+    this.filteredPedidos$ = baseFiltered$.pipe(
+      map(pedidos => {
+        return pedidos
+          .filter(p => this.activeStatuses.length === 0 || this.activeStatuses.includes(p.estado))
           .sort((a, b) => a.fechaEntrega.getTime() - b.fechaEntrega.getTime());
       })
     );
 
+    this.upcomingPedidos$ = pedidos$.pipe(
+      map(pedidos => {
+        const now = new Date();
+        const limit = new Date(now.getTime() + (this.upcomingThresholdHours * 60 * 60 * 1000));
+        return pedidos
+          .filter(p => p.estado === 'Pendiente')
+          .filter(p => p.fechaEntrega > now && p.fechaEntrega <= limit)
+          .sort((a, b) => a.fechaEntrega.getTime() - b.fechaEntrega.getTime());
+      })
+    );
+
+    this.counts$ = baseFiltered$.pipe(
+      map(pedidos => ({
+        falta: pedidos.filter(p => p.estado === 'Pendiente').length,
+        enCurso: pedidos.filter(p => p.estado === 'En Proceso').length,
+        terminado: pedidos.filter(p => p.estado === 'Producido').length
+      }))
+    );
+
     // Auto-refresh every 30 seconds
     setInterval(() => this.refresh$.next(), 30000);
+  }
+
+  changeThreshold(hours: number) {
+    this.upcomingThresholdHours = hours;
+    this.refresh$.next();
   }
 
   belongsToFamilia(p: Pedido, familia: string): boolean {
@@ -269,8 +401,16 @@ export class PedidosObradorComponent implements OnInit {
     return p.producto.toLowerCase().includes(familia.toLowerCase());
   }
 
-  togglePending() {
-    this.showOnlyPending = !this.showOnlyPending;
+  isStatusActive(status: EstadoPedido): boolean {
+    return this.activeStatuses.includes(status);
+  }
+
+  toggleStatus(status: EstadoPedido) {
+    if (this.activeStatuses.includes(status)) {
+      this.activeStatuses = this.activeStatuses.filter(s => s !== status);
+    } else {
+      this.activeStatuses = [...this.activeStatuses, status];
+    }
     this.refresh$.next();
   }
 
@@ -285,6 +425,10 @@ export class PedidosObradorComponent implements OnInit {
 
   setToday() {
     this.fechaFilter.setValue(this.formatDate(new Date()));
+  }
+
+  setFechaToPedido(p: Pedido) {
+    this.fechaFilter.setValue(this.formatDate(p.fechaEntrega));
   }
 
   updateStatus(id: string, estado: EstadoPedido) {

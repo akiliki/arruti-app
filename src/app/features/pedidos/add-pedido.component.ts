@@ -126,8 +126,8 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith } from 
             <div class="form-group">
               <label>Día de Entrega</label>
               <div class="quick-chips">
-                <div class="chip" (click)="setQuickDate(0)">Hoy</div>
-                <div class="chip" (click)="setQuickDate(1)">Mañana</div>
+                <div class="chip" *ngIf="isHoyPossible()" [class.active]="isDateHoy()" (click)="setQuickDate(0)">Hoy</div>
+                <div class="chip" [class.active]="isDateTomorrow()" (click)="setQuickDate(1)">Mañana</div>
                 <div class="chip" (click)="setNextDay(6)">Sábado</div>
                 <div class="chip" (click)="setNextDay(0)">Domingo</div>
               </div>
@@ -138,7 +138,7 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith } from 
               <div class="quick-chips">
                 <ng-container *ngFor="let t of availableHours">
                   <div 
-                    *ngIf="isTimeVisible(t)"
+                    *ngIf="isTimePossible(t)"
                     class="chip" 
                     [class.active]="isTimeSelected(t)"
                     (click)="setQuickTime(t)"
@@ -147,7 +147,12 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith } from 
                   </div>
                 </ng-container>
               </div>
-              <input style="margin-top: 0.75rem" type="datetime-local" formControlName="fechaEntrega">
+              <input 
+                style="margin-top: 0.75rem" 
+                type="datetime-local" 
+                formControlName="fechaEntrega"
+                [min]="minDateTime"
+              >
             </div>
 
             <div class="form-group">
@@ -398,7 +403,7 @@ export class AddPedidoComponent implements OnInit {
     productoBase: ['', Validators.required],
     talla: [''],
     cantidad: [1, [Validators.required, Validators.min(1)]],
-    fechaEntrega: [this.getDefaultDate(), Validators.required],
+    fechaEntrega: ['', Validators.required],
     estado: ['Pendiente'],
     nombreCliente: ['', Validators.required],
     notasPastelero: [''],
@@ -406,13 +411,7 @@ export class AddPedidoComponent implements OnInit {
   });
 
   private getDefaultDate(): string {
-    const now = new Date();
-    const tomorrow = new Date();
-    tomorrow.setDate(now.getDate() + 1);
-    
-    // Si ya es tarde para hoy (> 18:00), sugerimos mañana por la mañana
-    // Pero por defecto el código anterior usaba mañana 09:30, lo cual es seguro.
-    return `${tomorrow.toISOString().split('T')[0]}T09:30`;
+    return '';
   }
 
   ngOnInit() {
@@ -499,22 +498,42 @@ export class AddPedidoComponent implements OnInit {
     this.pedidoForm.get('cantidad')?.setValue(newVal);
   }
 
-  isTimeVisible(time: string): boolean {
-    const deliveryDateVal = this.pedidoForm.get('fechaEntrega')?.value;
+  get minDateTime(): string {
+    const now = new Date();
+    const minTime = new Date(now.getTime() + (this.leadTimeMinutes * 60000));
+    return this.formatDateForInput(minTime);
+  }
+
+  isHoyPossible(): boolean {
+    return this.availableHours.some(h => this.isTimePossible(h, this.getTodayStr()));
+  }
+
+  isDateHoy(): boolean {
+    const val = this.pedidoForm.get('fechaEntrega')?.value;
+    return val ? val.startsWith(this.getTodayStr()) : false;
+  }
+
+  isDateTomorrow(): boolean {
+    const val = this.pedidoForm.get('fechaEntrega')?.value;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    return val ? val.startsWith(tomorrowStr) : false;
+  }
+
+  isTimePossible(time: string, customDate?: string): boolean {
+    const deliveryDateVal = customDate || this.pedidoForm.get('fechaEntrega')?.value;
     if (!deliveryDateVal) return true;
 
     const [datePart] = deliveryDateVal.split('T');
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-
-    if (datePart !== today) return true;
-
     const [hours, minutes] = time.split(':').map(Number);
-    const timeDate = new Date();
-    timeDate.setHours(hours, minutes, 0, 0);
+    const [y, m, d] = datePart.split('-').map(Number);
+    
+    const timeDate = new Date(y, m - 1, d, hours, minutes, 0, 0);
+    const now = new Date();
+    const minLimit = new Date(now.getTime() + (this.leadTimeMinutes * 60000));
 
-    const minTime = new Date(now.getTime() + this.leadTimeMinutes * 60000);
-    return timeDate > minTime;
+    return timeDate > minLimit;
   }
 
   isTimeSelected(time: string): boolean {
@@ -523,46 +542,49 @@ export class AddPedidoComponent implements OnInit {
   }
 
   setQuickDate(daysToAdd: number) {
-    const currentVal = this.pedidoForm.get('fechaEntrega')?.value || '';
-    let timePart = currentVal.includes('T') ? currentVal.split('T')[1] : '09:30';
-    
     const date = new Date();
     date.setDate(date.getDate() + daysToAdd);
     const datePart = date.toISOString().split('T')[0];
 
-    // Si es hoy, nos aseguramos de que la hora seleccionada sea visible/válida
-    if (daysToAdd === 0 && !this.isTimeVisible(timePart)) {
-      const firstAvailable = this.availableHours.find(h => this.isTimeVisible(h));
-      timePart = firstAvailable || '19:30';
+    const currentVal = this.pedidoForm.get('fechaEntrega')?.value || '';
+    let timePart = currentVal.includes('T') ? currentVal.split('T')[1] : '00:00';
+
+    // Validar hora para el nuevo día si ya hay una hora seleccionada (distinta de 00:00)
+    if (timePart !== '00:00' && !this.isTimePossible(timePart, datePart)) {
+      const firstOk = this.availableHours.find(h => this.isTimePossible(h, datePart));
+      timePart = firstOk || '00:00';
     }
     
     this.pedidoForm.get('fechaEntrega')?.setValue(`${datePart}T${timePart}`);
   }
 
   setNextDay(targetDay: number) {
-    const currentVal = this.pedidoForm.get('fechaEntrega')?.value || '';
-    let timePart = currentVal.includes('T') ? currentVal.split('T')[1] : '09:30';
-    
     const date = new Date();
     const currentDay = date.getDay();
-    const daysToAdd = (targetDay - currentDay + 7) % 7;
+    const daysToAdd = (targetDay - currentDay + 7) % 7 || 7; // Mínimo 1 semana si es el mismo día
     
     date.setDate(date.getDate() + daysToAdd);
     const datePart = date.toISOString().split('T')[0];
-
-    if (daysToAdd === 0 && !this.isTimeVisible(timePart)) {
-      const firstAvailable = this.availableHours.find(h => this.isTimeVisible(h));
-      timePart = firstAvailable || '19:30';
-    }
+    
+    const currentVal = this.pedidoForm.get('fechaEntrega')?.value || '';
+    let timePart = currentVal.includes('T') ? currentVal.split('T')[1] : '00:00';
 
     this.pedidoForm.get('fechaEntrega')?.setValue(`${datePart}T${timePart}`);
   }
 
   setQuickTime(time: string) {
     const currentVal = this.pedidoForm.get('fechaEntrega')?.value || '';
-    const datePart = currentVal.includes('T') ? currentVal.split('T')[0] : new Date().toISOString().split('T')[0];
-    
+    const datePart = currentVal.includes('T') ? currentVal.split('T')[0] : this.getTodayStr();
     this.pedidoForm.get('fechaEntrega')?.setValue(`${datePart}T${time}`);
+  }
+
+  private getTodayStr(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  private formatDateForInput(date: Date): string {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 
   onSubmit() {
@@ -573,11 +595,16 @@ export class AddPedidoComponent implements OnInit {
     
     const formValue = this.pedidoForm.value;
 
-    // Validación extra para horas de hoy
+    // Validación de tiempo mínimo y que se haya seleccionado una hora
     if (formValue.fechaEntrega) {
       const [d, t] = formValue.fechaEntrega.split('T');
-      if (d === new Date().toISOString().split('T')[0] && !this.isTimeVisible(t)) {
-        this.errorMessage = 'La hora de entrega no es válida (es hoy y ya ha pasado o es muy próxima).';
+      if (t === '00:00') {
+        this.errorMessage = 'Por favor, selecciona una hora de entrega válida.';
+        this.submitting = false;
+        return;
+      }
+      if (!this.isTimePossible(t, d)) {
+        this.errorMessage = 'La fecha/hora de entrega no es válida (mínimo 2 horas de antelación).';
         this.submitting = false;
         return;
       }
