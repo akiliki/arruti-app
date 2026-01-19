@@ -69,4 +69,19 @@ describe('ProductoService', () => {
 
     expect(service.productosSignal().some(p => p.producto === 'Falla')).toBeFalse();
   });
+
+  it('should update signal optimistically when updating a product', () => {
+    // Primero añadimos uno
+    const productoOriginal = { id: 'edit-1', familia: 'A', producto: 'Original', tallasRaciones: [] };
+    // Simulamos carga inicial
+    service['productosState'].next([productoOriginal]);
+
+    const productoEditado = { ...productoOriginal, producto: 'Cambiado' };
+    service.updateProducto(productoEditado).subscribe();
+
+    expect(service.productosSignal().find(p => p.id === 'edit-1')?.producto).toBe('Cambiado');
+
+    const req = httpMock.expectOne(environment.apiUrl);
+    req.flush({ status: 'success' });
+  });
 });

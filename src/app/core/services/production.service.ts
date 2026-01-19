@@ -129,6 +129,36 @@ export class ProductionService {
     );
   }
 
+  updatePedido(pedido: Pedido): Observable<any> {
+    // 1. ACTUALIZACIÓN OPTIMISTA
+    const previousPedidos = this.pedidosState.value;
+    this.pedidosState.next(
+      previousPedidos.map(p => p.id === pedido.id ? pedido : p)
+    );
+
+    const payload = {
+      ...this.adapter.prepareForPost(pedido),
+      action: 'updateOrder'
+    };
+
+    return this.http.post<any>(this.apiUrl, JSON.stringify(payload), {
+      headers: new HttpHeaders({ 'Content-Type': 'text/plain;charset=utf-8' })
+    }).pipe(
+      map(response => {
+        if (response.status === 'error') throw new Error(response.message || 'Error en el servidor');
+        return response;
+      }),
+      tap(() => {
+        this.statsLoaded = false;
+      }),
+      catchError(error => {
+        // 2. ROLLBACK
+        this.pedidosState.next(previousPedidos);
+        return throwError(() => new Error(error.message || 'Error al actualizar. Se ha revertido el cambio.'));
+      })
+    );
+  }
+
   updatePedidoStatus(id: string, estado: EstadoPedido): Observable<any> {
     // 1. ACTUALIZACIÓN OPTIMISTA
     const previousPedidos = this.pedidosState.value;

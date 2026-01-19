@@ -3,7 +3,7 @@
 ## Reglas de Datos
 
 ### Identificadores (IDs)
-Todos los identificadores únicos (IDs) deben ser generados por el cliente (quien realiza la llamada) utilizando el estándar **UUID (v4)**. La base de datos (Google Sheets) almacenará estos IDs como strings.
+Todos los identificadores únicos (IDs) deben ser generados por el cliente (quien realiza la llamada) utilizando el estándar **UUID (v4)**. La base de datos (Google Sheets) almacenará estos IDs como strings. Para modificaciones, se debe reutilizar el ID original.
 
 ## Integraciones: Google Sheets
 
@@ -35,6 +35,30 @@ El sistema utiliza Google Sheets como base de datos centralizada.
 | Familia | String | Categoría (Bollos, Pasteles, etc.) |
 | Nombre | String | Nombre comercial |
 | Raciones_Tallas | String | Lista separada por comas |
+
+#### Hoja: `Usuarios` (Planificado)
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| ID_Usuario | String | Identificador único |
+| Nombre | String | Nombre completo |
+| Email | String | Correo electrónico (Login) |
+| Activo | Boolean | Estado de la cuenta |
+
+## Seguridad y Autenticación
+
+El sistema implementa un esquema de autenticación basado en servicios de Angular y guardias de ruta.
+
+### Componentes de Seguridad
+
+1.  **AuthService**: Centraliza la lógica de inicio de sesión, cierre de sesión y gestión del estado del usuario actual utilizando un `BehaviorSubject` para reactividad en la UI.
+2.  **AuthGuard**: Guardia funcional que protege todas las rutas de la aplicación (excepto `/login`). Verifica si hay un usuario autenticado antes de permitir la navegación.
+3.  **Local Storage**: Se utiliza para persistir la sesión del usuario de forma sencilla, permitiendo que la sesión se mantenga tras recargar la página.
+
+### Flujo de Autenticación
+
+- Al intentar acceder a cualquier ruta protegida, el `AuthGuard` verifica `AuthService.isLoggedIn()`.
+- Si es `false`, redirige a `/login`.
+- Tras un login exitoso, se guarda el objeto `Usuario` en el `localStorage` y se navega a la ruta principal.
 
 ## Contrato de API (Intercambio de Datos)
 

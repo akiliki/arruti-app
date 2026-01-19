@@ -63,29 +63,40 @@ import { Observable, switchMap, of, catchError } from 'rxjs';
   styles: [`
     .detail-container { max-width: 800px; margin: 0 auto; padding: 2rem; }
     .header { display: flex; align-items: center; gap: 2rem; margin-bottom: 2rem; }
-    .btn-back { background: none; border: none; color: #4a90e2; cursor: pointer; font-weight: 600; font-size: 1rem; }
-    .btn-back:hover { text-decoration: underline; }
+    .btn-back { background: none; border: none; color: #3b82f6; cursor: pointer; font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .btn-back:hover { color: #2563eb; }
 
-    .card { background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
-    .info-group { display: flex; flex-direction: column; gap: 0.5rem; border-bottom: 1px solid #f0f0f0; padding-bottom: 1rem; }
+    .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+    .info-group { display: flex; flex-direction: column; gap: 0.5rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 1.25rem; }
     .info-group:last-child { border-bottom: none; }
-    .info-group label { font-weight: bold; color: #666; font-size: 0.9rem; text-transform: uppercase; }
-    .value { font-size: 1.25rem; color: #333; }
-    .value.highlight { color: #d35400; font-weight: 800; font-size: 1.8rem; }
-    .value.code { font-family: monospace; font-size: 0.9rem; color: #888; }
+    .info-group label { font-weight: 800; color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .value { font-size: 1.25rem; color: #1e293b; font-weight: 500; }
+    .value.highlight { color: #1e293b; font-weight: 800; font-size: 2rem; }
+    .value.code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.85rem; color: #94a3b8; }
 
-    .badge { align-self: flex-start; background: #e3f2fd; color: #1976d2; padding: 0.5rem 1rem; border-radius: 20px; font-weight: bold; font-size: 1rem; }
+    .badge { align-self: flex-start; background: #e0f2fe; color: #0369a1; padding: 0.5rem 1rem; border-radius: 12px; font-weight: 800; font-size: 0.9rem; }
     
-    .tallas-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .talla-tag { background: #f5f5f5; border: 1px solid #ddd; padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 600; color: #444; }
-    .empty { color: #999; font-style: italic; }
+    .tallas-list { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .talla-tag { background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.5rem 1rem; border-radius: 10px; font-weight: 700; color: #475569; }
+    .empty { color: #94a3b8; font-style: italic; }
 
-    .actions { margin-top: 2rem; padding: 1rem; background: #fff9c4; border-radius: 8px; border-left: 5px solid #fbc02d; }
-    .hint { margin: 0; color: #856404; font-size: 0.9rem; }
+    .actions { margin-top: 2rem; padding: 1.25rem; background: #fefce8; border-radius: 12px; border: 1px solid #fef08a; display: flex; align-items: center; gap: 0.75rem; }
+    .hint { margin: 0; color: #854d0e; font-size: 0.9rem; font-weight: 500; }
 
-    .error-state, .loading-state { text-align: center; padding: 3rem; background: #fff; border-radius: 12px; }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+    .error-state, .loading-state { text-align: center; padding: 4rem; background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .spinner { border: 4px solid #f1f5f9; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1.5rem; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .detail-container { padding: 1rem; }
+      .header { flex-direction: column; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; }
+      .header h2 { font-size: 1.5rem; margin: 0; }
+      .card { padding: 1.5rem; gap: 1.25rem; }
+      .value.highlight { font-size: 1.5rem; }
+      .badge { font-size: 0.8rem; }
+      .talla-tag { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+    }
   `]
 })
 export class ProductoDetailComponent implements OnInit {

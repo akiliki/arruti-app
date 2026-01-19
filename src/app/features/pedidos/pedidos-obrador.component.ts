@@ -15,51 +15,61 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
     <div class="obrador-container">
       <div class="header">
         <h2>Producción de Obrador</h2>
-        <div class="auto-refresh">
-          <span class="dot" [class.active]="isRefreshing"></span>
-          Auto-actualizando cada 30s
+        <div class="header-actions">
+          <div class="threshold-wrapper">
+            <span class="threshold-label">Alertas próximas:</span>
+            <select class="threshold-select" [value]="upcomingThresholdHours" (change)="changeThreshold(+$any($event.target).value)">
+              <option [value]="2">2h</option>
+              <option [value]="4">4h</option>
+              <option [value]="8">8h</option>
+              <option [value]="24">24h</option>
+            </select>
+          </div>
+          <div class="auto-refresh">
+            <span class="dot" [class.active]="isRefreshing"></span>
+            Auto-refresh 30s
+          </div>
         </div>
       </div>
 
       <div class="filters">
         <div class="filter-group">
-          <label>Familia:</label>
+          <label>Familia</label>
           <select [formControl]="familiaFilter">
             <option value="">Todas las familias</option>
             <option *ngFor="let f of familias$ | async" [value]="f">{{f}}</option>
           </select>
         </div>
-        <div class="filter-group">
-          <label>Fecha:</label>
-          <div class="date-nav">
-            <button class="btn-nav" (click)="changeDay(-1)" title="Día Anterior">‹</button>
-            <input type="date" [formControl]="fechaFilter">
-            <button class="btn-nav" (click)="changeDay(1)" title="Día Siguiente">›</button>
+        <div class="filter-group date-col">
+          <label>Fecha de Producción</label>
+          <div class="date-controls">
+            <div class="date-nav">
+              <button class="btn-nav" (click)="changeDay(-1)" title="Anterior">‹</button>
+              <input type="date" [formControl]="fechaFilter">
+              <button class="btn-nav" (click)="changeDay(1)" title="Siguiente">›</button>
+            </div>
             <button class="btn-today" (click)="setToday()">HOY</button>
           </div>
         </div>
-        <div class="filter-group">
-          <label>Estados:</label>
+        <div class="filter-group states-group">
+          <label>Filtro por Estado</label>
           <div class="filter-chips" *ngIf="counts$ | async as counts">
             <button class="chip" [class.active]="isStatusActive('Pendiente')" (click)="toggleStatus('Pendiente')">
-              Falta <span class="count">{{counts.falta}}</span>
+              <span class="chip-label">Falta</span>
+              <span class="chip-icon">🔴</span>
+              <span class="count">{{counts.falta}}</span>
             </button>
             <button class="chip" [class.active]="isStatusActive('En Proceso')" (click)="toggleStatus('En Proceso')">
-              En curso <span class="count">{{counts.enCurso}}</span>
+              <span class="chip-label">En curso</span>
+              <span class="chip-icon">⏳</span>
+              <span class="count">{{counts.enCurso}}</span>
             </button>
             <button class="chip" [class.active]="isStatusActive('Producido')" (click)="toggleStatus('Producido')">
-              Terminado <span class="count">{{counts.terminado}}</span>
+              <span class="chip-label">Terminado</span>
+              <span class="chip-icon">✅</span>
+              <span class="count">{{counts.terminado}}</span>
             </button>
           </div>
-        </div>
-        <div class="filter-group settings">
-          <label>Alerta Próximos:</label>
-          <select [value]="upcomingThresholdHours" (change)="changeThreshold(+$any($event.target).value)">
-            <option [value]="2">Siguientes 2h</option>
-            <option [value]="4">Siguientes 4h</option>
-            <option [value]="8">Siguientes 8h</option>
-            <option [value]="24">Mañana (24h)</option>
-          </select>
         </div>
       </div>
 
@@ -134,79 +144,239 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
   `,
   styles: [`
     .obrador-container { padding: 20px; background: #f0f2f5; min-height: 100vh; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 1.5rem; 
+      flex-wrap: wrap; 
+      gap: 1rem; 
+    }
+    .header h2 { margin: 0; font-size: 1.5rem; color: #1e293b; font-weight: 800; }
     
-    .auto-refresh { font-size: 0.8rem; color: #666; display: flex; align-items: center; gap: 8px; }
-    .dot { width: 8px; height: 8px; background: #ccc; border-radius: 50%; }
-    .dot.active { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; animation: pulse 2s infinite; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
 
-    .filters { display: flex; gap: 20px; margin-bottom: 25px; align-items: flex-end; }
-    .filter-group { display: flex; flex-direction: column; gap: 5px; }
-    .filter-group label { font-weight: bold; font-size: 0.9rem; }
+    .threshold-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: white;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .threshold-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+    .threshold-select {
+      border: none;
+      background: transparent;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #1e293b;
+      cursor: pointer;
+      padding: 0;
+      width: auto;
+      height: auto;
+    }
+    .threshold-select:focus { outline: none; }
+
+    .auto-refresh { 
+      font-size: 0.75rem; 
+      color: #64748b; 
+      display: flex; 
+      align-items: center; 
+      gap: 6px; 
+      font-weight: 600;
+      background: #f1f5f9;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+    }
+    .dot { width: 8px; height: 8px; background: #cbd5e1; border-radius: 50%; }
+    .dot.active { background: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.6; } 100% { transform: scale(1); opacity: 1; } }
+
+  .filters { 
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem; 
+    margin-bottom: 2rem; 
+    background: white; 
+    padding: 1.5rem; 
+    border-radius: 16px; 
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
+    align-items: flex-end;
+  }
+
+  .filter-group { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 0.6rem; 
+    flex: 0 1 auto;
+  }
+
+  .filter-group.date-col {
+    flex: 1 1 auto;
+  }
+
+  .filter-group.states-group {
+    flex: 1 1 auto;
+  }
+
+  @media (min-width: 992px) {
+    .filter-group.date-col {
+      min-width: 380px;
+    }
+    .filter-group.states-group {
+      flex: 1 1 400px;
+    }
+  }
+    .filter-group label { 
+      font-weight: 800; 
+      font-size: 0.75rem; 
+      color: #64748b; 
+      text-transform: uppercase; 
+      letter-spacing: 0.1em; 
+    }
     
+    .date-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     .date-nav {
       display: flex;
       align-items: center;
-      gap: 5px;
-      background: white;
-      padding: 4px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      height: 44px;
+      overflow: hidden;
+      flex: 1;
+      min-width: 210px;
     }
-    .date-nav input { border: none; padding: 6px; font-weight: bold; outline: none; }
+    .date-nav input { 
+      border: none; 
+      background: white;
+      padding: 0 8px; 
+      font-weight: 700; 
+      outline: none; 
+      flex: 1;
+      height: 100%;
+      min-width: 140px;
+      font-size: 1rem;
+      color: #1e293b;
+      text-align: center;
+      border-left: 1px solid #e2e8f0;
+      border-right: 1px solid #e2e8f0;
+    }
     .btn-nav {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 4px;
-      padding: 4px 12px;
+      background: #f8fafc;
+      border: none;
+      width: 44px;
+      height: 100%;
       cursor: pointer;
-      font-size: 1.2rem;
-      color: #495057;
       display: flex;
       align-items: center;
       justify-content: center;
+      color: #64748b;
+      font-size: 1.4rem;
+      transition: all 0.2s;
     }
-    .btn-nav:hover { background: #e9ecef; }
-    .btn-today {
-      background: #e3f2fd;
-      color: #1976d2;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      font-weight: bold;
-      font-size: 0.8rem;
-      cursor: pointer;
-      margin-left: 5px;
-    }
-    .btn-today:hover { background: #bbdefb; }
+    .btn-nav:hover { background: #f1f5f9; color: #1e293b; }
 
-    select { padding: 10px; border-radius: 6px; border: 1px solid #ddd; min-width: 150px; }
-    
-    .filter-chips { display: flex; gap: 8px; }
+    .btn-today {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 0 16px;
+      height: 44px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+    }
+    .btn-today:hover { background: #2563eb; transform: translateY(-1px); }
+    .btn-today:active { transform: translateY(0); }
+
+    select { 
+      padding: 0 0.8rem;
+      border: 1px solid #e2e8f0; 
+      border-radius: 12px; 
+      width: 100%; 
+      height: 44px;
+      font-size: 0.95rem; 
+      background: #f8fafc; 
+      color: #1e293b;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+
+    @media (min-width: 992px) {
+      select {
+        max-width: 280px;
+      }
+    }
+
+    .filter-chips { 
+      display: flex; 
+      flex-wrap: wrap;
+      gap: 0.75rem; 
+    }
     .chip { 
-      padding: 8px 16px; 
-      border: 1px solid #ddd; 
+      padding: 0 1rem; 
+      height: 42px;
+      border: 1px solid #e2e8f0; 
       background: white; 
-      border-radius: 20px; 
+      border-radius: 10px; 
       cursor: pointer; 
       font-size: 0.9rem;
-      color: #666;
+      font-weight: 700;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
       transition: all 0.2s;
-      width: auto;
+      white-space: nowrap;
     }
-    .chip:hover { background: #f8f9fa; }
-    .chip.active { background: #34495e; color: white; border-color: #34495e; }
+    .chip-icon { display: none; }
+    .chip:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    .chip.active { 
+      background: #1e293b; 
+      color: white; 
+      border-color: #1e293b;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      transform: translateY(-1px);
+    }
     .chip .count { 
-      background: #eee; 
-      color: #777; 
-      padding: 1px 6px; 
-      border-radius: 10px; 
+      background: #f1f5f9; 
+      color: #475569; 
+      padding: 1px 8px; 
+      border-radius: 6px; 
       font-size: 0.75rem; 
-      margin-left: 5px; 
-      font-weight: bold;
+      font-weight: 800;
+      min-width: 20px;
+      text-align: center;
     }
-    .chip.active .count { background: rgba(255,255,255,0.2); color: white; }
+    .chip.active .count { 
+      background: rgba(255,255,255,0.2); 
+      color: white; 
+    }
 
     .alerts-section {
       background: #fff5f5;
@@ -297,22 +467,63 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
       border-left: 4px solid #fbc02d;
     }
 
-    .card-actions { padding: 15px; border-top: 1px solid #eee; }
-    button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+    .card-actions { padding: 15px; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 8px; }
+    button { width: 100%; padding: 14px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; min-height: 48px; display: flex; align-items: center; justify-content: center; }
     .btn-start { background: #3498db; color: white; }
     .btn-finish { background: #2ecc71; color: white; }
     .btn-view-order { 
       background: none; 
       color: #7f8c8d; 
       border: 1px solid #ddd; 
-      margin-top: 10px;
-      font-size: 0.8rem;
-      padding: 8px;
+      margin-top: 5px;
+      font-size: 0.85rem;
+      padding: 10px;
+      min-height: 44px;
     }
     .btn-view-order:hover { background: #f9f9f9; color: #2c3e50; border-color: #bdc3c7; }
-    .badge-done { color: #27ae60; font-weight: bold; display: block; text-align: center; }
+    .badge-done { color: #27ae60; font-weight: bold; display: block; text-align: center; padding: 10px; }
 
     .loading-state, .empty-state { grid-column: 1 / -1; padding: 50px; text-align: center; background: white; border-radius: 12px; color: #666; }
+
+    /* Estilos Responsivos */
+    @media (max-width: 768px) {
+      .obrador-container { padding: 12px; }
+      .filters { 
+        gap: 1rem; 
+        padding: 1rem;
+      }
+      .filter-group { 
+        min-width: 100%; 
+        flex: 1 0 100%; 
+      }
+      .date-controls {
+        flex-wrap: wrap;
+      }
+      .production-grid { grid-template-columns: 1fr; }
+      
+      .header h2 { font-size: 1.3rem; }
+      .alert-header h3 { font-size: 0.9rem; }
+      
+      .card-header .time { font-size: 1.2rem; }
+      .quantity { font-size: 1.5rem; }
+      .product-name { font-size: 1.1rem; }
+    }
+
+    @media (max-width: 480px) {
+      .btn-today { width: 100%; margin-top: 4px; }
+      .filter-chips { gap: 0.4rem; justify-content: space-between; }
+      .chip { 
+        padding: 0 0.4rem; 
+        height: 38px;
+        font-size: 0.8rem;
+        flex: 1;
+        justify-content: center;
+        gap: 0.3rem;
+      }
+      .chip-label { display: none; }
+      .chip-icon { display: block; font-size: 1.1rem; }
+      .chip .count { padding: 1px 4px; min-width: 16px; font-size: 0.7rem; }
+    }
   `]
 })
 export class PedidosObradorComponent implements OnInit {
@@ -445,21 +656,33 @@ export class PedidosObradorComponent implements OnInit {
     });
   }
 
-  private formatDate(date: Date): string {
-    return date.toISOString().split('T')[0];
+  private formatDate(date: any): string {
+    if (!date) return '';
+    const d = (date instanceof Date) ? date : new Date(date);
+    if (isNaN(d.getTime())) return '';
+    
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
-  isToday(date: Date): boolean {
+  isToday(date: any): boolean {
+    if (!date) return false;
+    const d = (date instanceof Date) ? date : new Date(date);
+    if (isNaN(d.getTime())) return false;
+
     const today = new Date();
-    return date.getDate() === today.getDate() &&
-           date.getMonth() === today.getMonth() &&
-           date.getFullYear() === today.getFullYear();
+    return d.getDate() === today.getDate() &&
+           d.getMonth() === today.getMonth() &&
+           d.getFullYear() === today.getFullYear();
   }
 
-  isUrgent(date: Date): boolean {
-    if (!this.isToday(date)) return false;
+  isUrgent(date: any): boolean {
+    if (!date) return false;
+    const d = (date instanceof Date) ? date : new Date(date);
+    if (!this.isToday(d)) return false;
+    
     const now = new Date();
-    const diffHours = (date.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const diffHours = (d.getTime() - now.getTime()) / (1000 * 60 * 60);
     return diffHours < 3; // Menos de 3 horas para la entrega
   }
 }

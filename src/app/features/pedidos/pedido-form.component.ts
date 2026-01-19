@@ -1,14 +1,15 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormControl } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { ProductionService } from '../../core/services/production.service';
 import { ProductoService } from '../../core/services/producto.service';
 import { Producto } from '../../core/models/producto.model';
+import { Pedido } from '../../core/models/pedido.model';
 import { Observable, tap, BehaviorSubject, combineLatest, map, startWith } from 'rxjs';
 
 @Component({
-  selector: 'app-add-pedido',
+  selector: 'app-pedido-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   template: `
@@ -19,7 +20,7 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith } from 
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
         </button>
-        <h2>Nuevo Pedido</h2>
+        <h2>{{ isEditMode ? 'Editar Pedido' : 'Nuevo Pedido' }}</h2>
       </div>
 
       <form [formGroup]="pedidoForm" (ngSubmit)="onSubmit()" class="responsive-grid">
@@ -376,13 +377,16 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith } from 
     }
   `]
 })
-export class AddPedidoComponent implements OnInit {
+export class PedidoFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private productionService = inject(ProductionService);
   private productoService = inject(ProductoService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   submitting = false;
+  isEditMode = false;
+  pedidoId: string | null = null;
   successMessage = '';
   errorMessage = '';
   showResults = false;
@@ -415,8 +419,16 @@ export class AddPedidoComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.pedidoId = this.route.snapshot.paramMap.get('id');
+    this.isEditMode = !!this.pedidoId;
+
     this.productos$ = this.productoService.getProductos().pipe(
-      tap(prods => this.allProductos = prods)
+      tap(prods => {
+        this.allProductos = prods;
+        if (this.isEditMode && this.pedidoId) {
+          this.loadPedido(this.pedidoId);
+        }
+      })
     );
 
     this.familias$ = this.productos$.pipe(
@@ -437,6 +449,42 @@ export class AddPedidoComponent implements OnInit {
         });
       })
     );
+  }
+
+  loadPedido(id: string) {
+    this.productionService.getPedidos().pipe(
+      map(pedidos => pedidos.find(p => p.id === id))
+    ).subscribe(pedido => {
+      if (pedido) {
+        // Encontrar el producto base y la talla
+        let foundProduct: Producto | null = null;
+        let foundTalla = '';
+
+        // El formato es "Nombre Producto (Talla)" o "Nombre Producto"
+        const matches = pedido.producto.match(/(.+)\s\((.+)\)$/);
+        const nameToSearch = matches ? matches[1] : pedido.producto;
+        const tallaToSearch = matches ? matches[2] : '';
+
+        foundProduct = this.allProductos.find(p => p.producto === nameToSearch) || null;
+        if (foundProduct) {
+          this.selectProducto(foundProduct);
+          if (tallaToSearch) {
+            this.pedidoForm.get('talla')?.setValue(tallaToSearch);
+          }
+        }
+
+        const dateStr = this.formatDateForInput(new Date(pedido.fechaEntrega));
+
+        this.pedidoForm.patchValue({
+          cantidad: pedido.cantidad,
+          fechaEntrega: dateStr,
+          estado: pedido.estado,
+          nombreCliente: pedido.nombreCliente,
+          notasPastelero: pedido.notasPastelero,
+          notasTienda: pedido.notasTienda
+        });
+      }
+    });
   }
 
   selectFamilia(f: string | null) {
@@ -582,9 +630,13 @@ export class AddPedidoComponent implements OnInit {
     return new Date().toISOString().split('T')[0];
   }
 
-  private formatDateForInput(date: Date): string {
+  private formatDateForInput(date: any): string {
+    if (!date) return '';
+    const d = (date instanceof Date) ? date : new Date(date);
+    if (isNaN(d.getTime())) return '';
+    
     const pad = (n: number) => n.toString().padStart(2, '0');
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   onSubmit() {
@@ -612,7 +664,8 @@ export class AddPedidoComponent implements OnInit {
 
     const productName = this.selectedProducto.producto + (formValue.talla ? ` (${formValue.talla})` : '');
 
-    const nuevoPedido = {
+    const pedidoData = {
+      id: this.isEditMode ? this.pedidoId : crypto.randomUUID(),
       producto: productName,
       cantidad: formValue.cantidad,
       fechaEntrega: formValue.fechaEntrega,
@@ -622,9 +675,13 @@ export class AddPedidoComponent implements OnInit {
       notasTienda: formValue.notasTienda
     };
     
-    this.productionService.addPedido(nuevoPedido as any).subscribe({
+    const operation = this.isEditMode 
+      ? this.productionService.updatePedido(pedidoData as any)
+      : this.productionService.addPedido(pedidoData as any);
+
+    operation.subscribe({
       next: () => {
-        this.successMessage = 'Pedido guardado correctamente. Redirigiendo...';
+        this.successMessage = `Pedido ${this.isEditMode ? 'actualizado' : 'guardado'} correctamente. Redirigiendo...`;
         setTimeout(() => this.router.navigate(['/pedidos']), 2000);
       },
       error: (err) => {

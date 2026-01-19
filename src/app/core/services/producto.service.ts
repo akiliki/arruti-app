@@ -80,4 +80,30 @@ export class ProductoService {
       })
     );
   }
+
+  updateProducto(producto: Producto): Observable<any> {
+    // 1. ACTUALIZACIÓN OPTIMISTA
+    const previousState = this.productosState.value;
+    const updatedState = previousState.map(p => p.id === producto.id ? producto : p);
+    this.productosState.next(updatedState);
+
+    const payload = {
+      ...this.adapter.prepareProductoForPost(producto),
+      action: 'updateProduct'
+    };
+
+    return this.http.post<any>(this.apiUrl, JSON.stringify(payload), {
+      headers: new HttpHeaders({ 'Content-Type': 'text/plain;charset=utf-8' })
+    }).pipe(
+      map(response => {
+        if (response.status === 'error') throw new Error(response.message);
+        return response;
+      }),
+      catchError(error => {
+        // 2. ROLLBACK
+        this.productosState.next(previousState);
+        return throwError(() => new Error('Error al actualizar. Se ha revertido el cambio.'));
+      })
+    );
+  }
 }

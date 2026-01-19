@@ -47,9 +47,12 @@ import { Observable, combineLatest, map, startWith } from 'rxjs';
               <td><span class="badge">{{p.familia}}</span></td>
               <td><strong>{{p.producto}}</strong></td>
               <td>{{p.tallasRaciones.join(', ') || '-'}}</td>
-              <td>
+              <td class="actions-cell">
                 <button class="btn-detail" [routerLink]="['/productos', p.id]">
-                  Ver detalle
+                  Ver
+                </button>
+                <button class="btn-edit" [routerLink]="['/productos/editar', p.id]">
+                  Editar
                 </button>
               </td>
             </tr>
@@ -69,33 +72,124 @@ import { Observable, combineLatest, map, startWith } from 'rxjs';
     </div>
   `,
   styles: [`
-    .list-container { padding: 1rem; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-    .filters { display: flex; gap: 1rem; margin-bottom: 1.5rem; background: #f9f9f9; padding: 1rem; border-radius: 8px; }
-    .filter-group { display: flex; flex-direction: column; gap: 0.5rem; }
-    .filter-group select, .filter-group input { padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
-    
-    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
-    th { background: #f4f4f4; font-weight: 600; color: #666; }
-    
-    .badge { background: #e3f2fd; color: #1976d2; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600; }
-    .btn-new { background: #4caf50; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; font-weight: 600; text-decoration: none; }
-    .btn-new:hover { background: #45a049; }
+    .list-container { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
+    .header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 2rem; 
+      gap: 1rem;
+    }
+    .header h2 { margin: 0; font-size: 1.8rem; color: #1e293b; font-weight: 800; }
 
-    .btn-detail {
-      background: #34495e;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
+    .btn-new { 
+      background: #3b82f6; 
+      color: white; 
+      border: none; 
+      padding: 0.75rem 1.5rem; 
+      border-radius: 12px; 
+      cursor: pointer; 
+      font-weight: 700; 
+      text-decoration: none; 
+      transition: all 0.2s;
+      box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+    }
+    .btn-new:hover { background: #2563eb; transform: translateY(-1px); }
+
+    .filters { 
+      display: flex; 
+      gap: 1.5rem; 
+      margin-bottom: 2rem; 
+      background: white; 
+      padding: 1.5rem; 
+      border-radius: 16px; 
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+    .filter-group label { font-weight: 800; font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .filter-group select, .filter-group input { 
+      padding: 0.75rem; 
+      border: 1px solid #e2e8f0; 
+      border-radius: 10px; 
+      background: #f8fafc;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .filter-group select:focus, .filter-group input:focus { border-color: #3b82f6; background: white; }
+    
+    .table-wrapper { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f8fafc; padding: 1rem 1.5rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 800; border-bottom: 2px solid #e2e8f0; }
+    td { padding: 1.25rem 1.5rem; text-align: left; border-bottom: 1px solid #f1f5f9; color: #1e293b; }
+    
+    .badge { background: #e0f2fe; color: #0369a1; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; }
+    
+    .actions-cell { display: flex; gap: 0.5rem; }
+    .btn-detail, .btn-edit {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 0.85rem;
-      font-weight: 500;
+      font-weight: 700;
+      border: none;
+      transition: all 0.2s;
     }
-    .btn-detail:hover { background: #2c3e50; }
+    .btn-detail { background: #f1f5f9; color: #475569; }
+    .btn-detail:hover { background: #e2e8f0; }
+    .btn-edit { background: #eff6ff; color: #3b82f6; }
+    .btn-edit:hover { background: #dbeafe; }
     
-    .empty-state, .loading { text-align: center; padding: 3rem; color: #666; }
+    .empty-state, .loading { text-align: center; padding: 4rem; color: #64748b; font-weight: 500; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header { flex-direction: column; align-items: stretch; text-align: center; }
+      .header h2 { font-size: 1.5rem; }
+      
+      .filters { flex-direction: column; gap: 1rem; padding: 1.25rem; }
+      
+      .table-wrapper { background: transparent; box-shadow: none; border-radius: 0; }
+      table, thead, tbody, th, td, tr { display: block; }
+      thead { display: none; }
+      
+      tr { 
+        background: white; 
+        border-radius: 16px; 
+        margin-bottom: 1rem; 
+        padding: 1.25rem; 
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        position: relative;
+      }
+      
+      td { 
+        border: none; 
+        padding: 0.5rem 0; 
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      td:first-child { margin-bottom: 0.5rem; }
+      td:nth-child(2) { font-size: 1.2rem; margin-bottom: 0.25rem; }
+      td:nth-child(3) { color: #64748b; font-size: 0.9rem; margin-bottom: 1rem; }
+      
+      /* Add labels for mobile */
+      td:nth-child(3)::before { content: 'Tallas: '; font-weight: 700; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; }
+      
+      .actions-cell {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #f1f5f9;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+      }
+      .actions-cell button { width: 100%; padding: 0.75rem; }
+    }
+
+    @media (max-width: 480px) {
+      .list-container { padding: 1rem; }
+    }
   `]
 })
 export class ProductosListComponent implements OnInit {

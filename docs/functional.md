@@ -36,6 +36,13 @@ Como administrador, quiero gestionar los productos de la pastelería (familias, 
 3. Completa los datos: Familia (ej: Bollería), Producto (ej: Croissant), Raciones o Tamaños (lista separada por comas).
 4. El sistema genera un UUID para el producto y lo guarda.
 
+**Flujo Principal (Modificar):**
+1. El usuario accede a la sección de Productos.
+2. El usuario pulsa "Editar" en el producto deseado.
+3. El sistema carga los datos actuales en el formulario.
+4. El usuario modifica los campos necesarios.
+5. Al guardar, el sistema actualiza el registro en Google Sheets manteniendo el mismo ID.
+
 **Flujo Principal (Listar):**
 1. El usuario accede a la sección de Productos.
 2. El sistema muestra la lista de productos agrupados o filtrables por Familia.
@@ -63,3 +70,44 @@ Como gestor, quiero crear pedidos seleccionando productos del catálogo de forma
 * La interfaz debe ser utilizable sin teclado/ratón (target táctil > 44px).
 * Feedback visual inmediato tras la creación.
 * Persistencia en Google Sheets.
+
+### CU-04: Modificación de Pedidos
+**Estado:** Definido
+**Criticidad:** ALTA
+
+**Descripción:**
+Como gestor, quiero poder modificar los datos de un pedido existente (producto, cantidad, fecha de entrega, cliente) para corregir errores o adaptarme a cambios del cliente.
+
+**Flujo Principal:**
+1. El usuario accede a la lista de pedidos.
+2. Pulsa el botón de "Editar" en el pedido correspondiente.
+3. El sistema carga los datos actuales en el formulario de pedido.
+4. El usuario realiza los cambios y pulsa "Actualizar".
+5. El sistema aplica una actualización optimista en la lista y sincroniza con Google Sheets.
+
+**Criterios de Aceptación:**
+* Se debe mantener el ID_Pedido original.
+* Los cambios deben reflejarse inmediatamente en el dashboard y lista de pedidos.
+
+### CU-05: Gestión de Seguridad
+**Estado:** Definido
+**Criticidad:** MEDIA
+
+**Descripción:**
+Como administrador, quiero gestionar los usuarios que tienen acceso a la aplicación y sus respectivos perfiles para asegurar que cada persona solo acceda a la información necesaria para su trabajo.
+
+**Flujo Principal (Control de Acceso):**
+1. El usuario accede a la URL de la aplicación.
+2. Si no ha iniciado sesión, el sistema le redirigirá automáticamente a la pantalla de Login.
+3. El usuario introduce sus credenciales (email y contraseña).
+4. Tras un inicio de sesión exitoso, el usuario es redirigido a la pantalla de pedidos.
+
+**Flujo Principal (Usuarios y Perfiles):**
+1. El usuario administrador accede a la sección de Seguridad.
+2. En la pestaña "Usuarios", puede ver el listado de personas con acceso, su email y estado de activación.
+3. En la pestaña "Perfiles", puede ver los roles disponibles y sus descripciones (ej: Administrador, Obrador, Tienda).
+
+**Criterios de Aceptación:**
+- Ningún usuario puede acceder a las rutas internas sin estar debidamente autenticado.
+- La barra de navegación debe mostrar el nombre del usuario conectado y permitir el cierre de sesión.
+- Los datos de usuario se persisten localmente durante la sesión.
