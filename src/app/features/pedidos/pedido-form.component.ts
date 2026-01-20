@@ -4,7 +4,9 @@ import { ReactiveFormsModule, FormBuilder, Validators, FormControl } from '@angu
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { ProductionService } from '../../core/services/production.service';
 import { ProductoService } from '../../core/services/producto.service';
+import { EmpleadoService } from '../../core/services/empleado.service';
 import { Producto } from '../../core/models/producto.model';
+import { Empleado } from '../../core/models/empleado.model';
 import { Pedido } from '../../core/models/pedido.model';
 import { Observable, tap, BehaviorSubject, combineLatest, map, startWith } from 'rxjs';
 
@@ -100,6 +102,20 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith } from 
               </div>
             </div>
 
+            <div class="form-group" *ngIf="selectedProducto && selectedProducto.rellenos && selectedProducto.rellenos.length > 0">
+              <label>Relleno</label>
+              <div class="quick-chips">
+                <div 
+                  *ngFor="let r of selectedProducto.rellenos" 
+                  class="chip" 
+                  [class.active]="pedidoForm.get('relleno')?.value === r"
+                  (click)="pedidoForm.get('relleno')?.setValue(r)"
+                >
+                  {{r}}
+                </div>
+              </div>
+            </div>
+
             <div class="form-group">
               <label>Cantidad</label>
               <div class="cantidad-control">
@@ -121,8 +137,25 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith } from 
                 <line x1="8" y1="2" x2="8" y2="6"/>
                 <line x1="3" y1="10" x2="21" y2="10"/>
               </svg>
-              Datos de Entrega
+              Datos de Entrega y Cliente
             </h3>
+
+            <div class="form-group">
+              <label>¿Quién recoge el pedido? (Empleado)</label>
+              <div class="quick-chips">
+                <div 
+                  *ngFor="let e of empleados$ | async" 
+                  class="chip" 
+                  [class.active]="pedidoForm.get('vendedor')?.value === e.nombre"
+                  (click)="pedidoForm.get('vendedor')?.setValue(e.nombre); saveVendedor(e.nombre)"
+                >
+                  {{e.nombre}}
+                </div>
+              </div>
+              <div *ngIf="pedidoForm.get('vendedor')?.invalid && pedidoForm.get('vendedor')?.touched" class="error-inline">
+                Debes seleccionar quién atendió al cliente.
+              </div>
+            </div>
 
             <div class="form-group">
               <label>Día de Entrega</label>
@@ -132,11 +165,17 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith } from 
                 <div class="chip" (click)="setNextDay(6)">Sábado</div>
                 <div class="chip" (click)="setNextDay(0)">Domingo</div>
               </div>
+              <input 
+                style="margin-top: 0.75rem" 
+                type="date" 
+                formControlName="diaEntrega"
+                [min]="minDate"
+              >
             </div>
 
             <div class="form-group">
               <label>Hora de Entrega</label>
-              <div class="quick-chips">
+              <div class="quick-chips" *ngIf="isDateSelected()">
                 <ng-container *ngFor="let t of availableHours">
                   <div 
                     *ngIf="isTimePossible(t)"
@@ -148,11 +187,14 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith } from 
                   </div>
                 </ng-container>
               </div>
+              <div *ngIf="!isDateSelected()" class="info-inline">
+                Primero selecciona un día para ver las horas disponibles.
+              </div>
               <input 
+                *ngIf="isDateSelected()"
                 style="margin-top: 0.75rem" 
-                type="datetime-local" 
-                formControlName="fechaEntrega"
-                [min]="minDateTime"
+                type="time" 
+                formControlName="horaEntrega"
               >
             </div>
 
@@ -375,12 +417,20 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith } from 
         &.error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
       }
     }
+
+    .error-inline {
+      color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; font-weight: 500;
+    }
+    .info-inline {
+      color: #64748b; font-size: 0.85rem; margin-top: 0.5rem; font-style: italic;
+    }
   `]
 })
 export class PedidoFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private productionService = inject(ProductionService);
   private productoService = inject(ProductoService);
+  private empleadoService = inject(EmpleadoService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -393,6 +443,7 @@ export class PedidoFormComponent implements OnInit {
 
   productos$!: Observable<Producto[]>;
   familias$!: Observable<string[]>;
+  empleados$!: Observable<Empleado[]>;
   filteredProductos$!: Observable<Producto[]>;
   allProductos: Producto[] = [];
   selectedProducto: Producto | null = null;
@@ -406,8 +457,11 @@ export class PedidoFormComponent implements OnInit {
   pedidoForm = this.fb.group({
     productoBase: ['', Validators.required],
     talla: [''],
+    relleno: [''],
     cantidad: [1, [Validators.required, Validators.min(1)]],
-    fechaEntrega: ['', Validators.required],
+    diaEntrega: ['', Validators.required],
+    horaEntrega: ['', Validators.required],
+    vendedor: ['', Validators.required],
     estado: ['Pendiente'],
     nombreCliente: ['', Validators.required],
     notasPastelero: [''],
@@ -422,6 +476,14 @@ export class PedidoFormComponent implements OnInit {
     this.pedidoId = this.route.snapshot.paramMap.get('id');
     this.isEditMode = !!this.pedidoId;
 
+    // Si no es modo edición, intentar cargar el último vendedor usado
+    if (!this.isEditMode) {
+      const lastVendedor = localStorage.getItem('lastVendedor');
+      if (lastVendedor) {
+        this.pedidoForm.get('vendedor')?.setValue(lastVendedor);
+      }
+    }
+
     this.productos$ = this.productoService.getProductos().pipe(
       tap(prods => {
         this.allProductos = prods;
@@ -433,6 +495,10 @@ export class PedidoFormComponent implements OnInit {
 
     this.familias$ = this.productos$.pipe(
       map(prods => [...new Set(prods.map(p => p.familia))].sort())
+    );
+
+    this.empleados$ = this.empleadoService.getEmpleados().pipe(
+      map(emps => emps.filter(e => e.activo))
     );
 
     this.filteredProductos$ = combineLatest([
@@ -456,28 +522,24 @@ export class PedidoFormComponent implements OnInit {
       map(pedidos => pedidos.find(p => p.id === id))
     ).subscribe(pedido => {
       if (pedido) {
-        // Encontrar el producto base y la talla
-        let foundProduct: Producto | null = null;
-        let foundTalla = '';
-
-        // El formato es "Nombre Producto (Talla)" o "Nombre Producto"
-        const matches = pedido.producto.match(/(.+)\s\((.+)\)$/);
-        const nameToSearch = matches ? matches[1] : pedido.producto;
-        const tallaToSearch = matches ? matches[2] : '';
-
-        foundProduct = this.allProductos.find(p => p.producto === nameToSearch) || null;
+        // Encontrar el producto base por nombre directo
+        const foundProduct = this.allProductos.find(p => p.producto === pedido.producto) || null;
+        
         if (foundProduct) {
           this.selectProducto(foundProduct);
-          if (tallaToSearch) {
-            this.pedidoForm.get('talla')?.setValue(tallaToSearch);
-          }
         }
 
-        const dateStr = this.formatDateForInput(new Date(pedido.fechaEntrega));
+        const date = new Date(pedido.fechaEntrega);
+        const diaStr = date.toISOString().split('T')[0];
+        const horaStr = date.toTimeString().split(' ')[0].substring(0, 5); // HH:mm
 
         this.pedidoForm.patchValue({
+          talla: pedido.talla || '',
+          relleno: pedido.relleno || '',
           cantidad: pedido.cantidad,
-          fechaEntrega: dateStr,
+          diaEntrega: diaStr,
+          horaEntrega: horaStr,
+          vendedor: pedido.vendedor || '',
           estado: pedido.estado,
           nombreCliente: pedido.nombreCliente,
           notasPastelero: pedido.notasPastelero,
@@ -513,12 +575,23 @@ export class PedidoFormComponent implements OnInit {
       this.pedidoForm.get('talla')?.setValue('');
     }
 
+    // Si solo hay un relleno, lo seleccionamos automáticamente
+    if (this.selectedProducto?.rellenos?.length === 1) {
+      this.pedidoForm.get('relleno')?.setValue(this.selectedProducto.rellenos[0]);
+    } else {
+      this.pedidoForm.get('relleno')?.setValue('');
+    }
+
     if (this.selectedProducto?.tallasRaciones?.length && this.selectedProducto.tallasRaciones.length > 1) {
       this.pedidoForm.get('talla')?.setValidators(Validators.required);
     } else {
       this.pedidoForm.get('talla')?.clearValidators();
     }
     this.pedidoForm.get('talla')?.updateValueAndValidity();
+  }
+
+  saveVendedor(nombre: string) {
+    localStorage.setItem('lastVendedor', nombre);
   }
 
   onProductoChange() {
@@ -546,10 +619,8 @@ export class PedidoFormComponent implements OnInit {
     this.pedidoForm.get('cantidad')?.setValue(newVal);
   }
 
-  get minDateTime(): string {
-    const now = new Date();
-    const minTime = new Date(now.getTime() + (this.leadTimeMinutes * 60000));
-    return this.formatDateForInput(minTime);
+  get minDate(): string {
+    return new Date().toISOString().split('T')[0];
   }
 
   isHoyPossible(): boolean {
@@ -557,25 +628,27 @@ export class PedidoFormComponent implements OnInit {
   }
 
   isDateHoy(): boolean {
-    const val = this.pedidoForm.get('fechaEntrega')?.value;
-    return val ? val.startsWith(this.getTodayStr()) : false;
+    return this.pedidoForm.get('diaEntrega')?.value === this.getTodayStr();
+  }
+
+  isDateSelected(): boolean {
+    return !!this.pedidoForm.get('diaEntrega')?.value;
   }
 
   isDateTomorrow(): boolean {
-    const val = this.pedidoForm.get('fechaEntrega')?.value;
+    const val = this.pedidoForm.get('diaEntrega')?.value;
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().split('T')[0];
-    return val ? val.startsWith(tomorrowStr) : false;
+    return val === tomorrowStr;
   }
 
   isTimePossible(time: string, customDate?: string): boolean {
-    const deliveryDateVal = customDate || this.pedidoForm.get('fechaEntrega')?.value;
+    const deliveryDateVal = customDate || this.pedidoForm.get('diaEntrega')?.value;
     if (!deliveryDateVal) return true;
 
-    const [datePart] = deliveryDateVal.split('T');
     const [hours, minutes] = time.split(':').map(Number);
-    const [y, m, d] = datePart.split('-').map(Number);
+    const [y, m, d] = deliveryDateVal.split('-').map(Number);
     
     const timeDate = new Date(y, m - 1, d, hours, minutes, 0, 0);
     const now = new Date();
@@ -585,45 +658,34 @@ export class PedidoFormComponent implements OnInit {
   }
 
   isTimeSelected(time: string): boolean {
-    const val = this.pedidoForm.get('fechaEntrega')?.value;
-    return val ? val.endsWith(time) : false;
+    return this.pedidoForm.get('horaEntrega')?.value === time;
   }
 
   setQuickDate(daysToAdd: number) {
     const date = new Date();
     date.setDate(date.getDate() + daysToAdd);
     const datePart = date.toISOString().split('T')[0];
+    this.pedidoForm.get('diaEntrega')?.setValue(datePart);
 
-    const currentVal = this.pedidoForm.get('fechaEntrega')?.value || '';
-    let timePart = currentVal.includes('T') ? currentVal.split('T')[1] : '00:00';
-
-    // Validar hora para el nuevo día si ya hay una hora seleccionada (distinta de 00:00)
-    if (timePart !== '00:00' && !this.isTimePossible(timePart, datePart)) {
-      const firstOk = this.availableHours.find(h => this.isTimePossible(h, datePart));
-      timePart = firstOk || '00:00';
+    // Si la hora actual ya no es posible para el nuevo día, la reseteamos
+    const currentHora = this.pedidoForm.get('horaEntrega')?.value;
+    if (currentHora && !this.isTimePossible(currentHora, datePart)) {
+      this.pedidoForm.get('horaEntrega')?.setValue('');
     }
-    
-    this.pedidoForm.get('fechaEntrega')?.setValue(`${datePart}T${timePart}`);
   }
 
   setNextDay(targetDay: number) {
     const date = new Date();
     const currentDay = date.getDay();
-    const daysToAdd = (targetDay - currentDay + 7) % 7 || 7; // Mínimo 1 semana si es el mismo día
+    const daysToAdd = (targetDay - currentDay + 7) % 7 || 7; 
     
     date.setDate(date.getDate() + daysToAdd);
     const datePart = date.toISOString().split('T')[0];
-    
-    const currentVal = this.pedidoForm.get('fechaEntrega')?.value || '';
-    let timePart = currentVal.includes('T') ? currentVal.split('T')[1] : '00:00';
-
-    this.pedidoForm.get('fechaEntrega')?.setValue(`${datePart}T${timePart}`);
+    this.pedidoForm.get('diaEntrega')?.setValue(datePart);
   }
 
   setQuickTime(time: string) {
-    const currentVal = this.pedidoForm.get('fechaEntrega')?.value || '';
-    const datePart = currentVal.includes('T') ? currentVal.split('T')[0] : this.getTodayStr();
-    this.pedidoForm.get('fechaEntrega')?.setValue(`${datePart}T${time}`);
+    this.pedidoForm.get('horaEntrega')?.setValue(time);
   }
 
   private getTodayStr(): string {
@@ -648,27 +710,24 @@ export class PedidoFormComponent implements OnInit {
     const formValue = this.pedidoForm.value;
 
     // Validación de tiempo mínimo y que se haya seleccionado una hora
-    if (formValue.fechaEntrega) {
-      const [d, t] = formValue.fechaEntrega.split('T');
-      if (t === '00:00') {
-        this.errorMessage = 'Por favor, selecciona una hora de entrega válida.';
-        this.submitting = false;
-        return;
-      }
-      if (!this.isTimePossible(t, d)) {
+    if (formValue.diaEntrega && formValue.horaEntrega) {
+      if (!this.isTimePossible(formValue.horaEntrega, formValue.diaEntrega)) {
         this.errorMessage = 'La fecha/hora de entrega no es válida (mínimo 2 horas de antelación).';
         this.submitting = false;
         return;
       }
     }
 
-    const productName = this.selectedProducto.producto + (formValue.talla ? ` (${formValue.talla})` : '');
+    const fullFechaEntrega = `${formValue.diaEntrega}T${formValue.horaEntrega}`;
 
     const pedidoData = {
       id: this.isEditMode ? this.pedidoId : crypto.randomUUID(),
-      producto: productName,
+      producto: this.selectedProducto.producto, // Solo el nombre
+      talla: formValue.talla || '',             // Talla por separado
+      relleno: formValue.relleno || '',
+      vendedor: formValue.vendedor || '',       // Quien lo recoge
       cantidad: formValue.cantidad,
-      fechaEntrega: formValue.fechaEntrega,
+      fechaEntrega: fullFechaEntrega,
       estado: formValue.estado,
       nombreCliente: formValue.nombreCliente,
       notasPastelero: formValue.notasPastelero,
@@ -681,6 +740,11 @@ export class PedidoFormComponent implements OnInit {
 
     operation.subscribe({
       next: () => {
+        // Guardar el vendedor actual para el próximo pedido
+        if (formValue.vendedor) {
+          localStorage.setItem('lastVendedor', formValue.vendedor);
+        }
+        
         this.successMessage = `Pedido ${this.isEditMode ? 'actualizado' : 'guardado'} correctamente. Redirigiendo...`;
         setTimeout(() => this.router.navigate(['/pedidos']), 2000);
       },

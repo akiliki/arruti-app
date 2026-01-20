@@ -18,6 +18,10 @@ function doGet(e) {
     if (type === 'productos') {
       return handleGetProductos(ss);
     }
+
+    if (type === 'empleados') {
+      return handleGetEmpleados(ss);
+    }
     
     const sheetPedidos = ss.getSheetByName('Pedidos');
     if (!sheetPedidos) {
@@ -51,7 +55,10 @@ function doGet(e) {
       fecha_act: row[5],
       nombre_cliente: row[6],
       notas_pastelero: row[7],
-      notas_tienda: row[8]
+      notas_tienda: row[8],
+      relleno: row[9],
+      talla: row[10],
+      vendedor: row[11]
     }));
 
     // Cálculo de estadísticas
@@ -150,10 +157,13 @@ function handleAddPedido(sheet, pedido) {
   const fecha = pedido.fechaEntrega;
   const est = pedido.estado || 'Pendiente';
   const cli = pedido.nombre_cliente || pedido.nombreCliente || '';
+  const rel = pedido.relleno || '';
+  const tal = pedido.talla || '';
   const noteP = pedido.notas_pastelero || pedido.notasPastelero || '';
   const noteT = pedido.notas_tienda || pedido.notasTienda || '';
+  const vend = pedido.vendedor || '';
 
-  // Preparar fila: ID, Producto, Cantidad, Fecha, Estado, Fecha Actualización, Cliente, Notas Pastelero, Notas Tienda
+  // Preparar fila: ID, Producto, Cantidad, Fecha, Estado, Fecha Actualización, Cliente, Notas Pastelero, Notas Tienda, Relleno, Talla, Vendedor
   const newRow = [
     id,
     prod,
@@ -163,7 +173,10 @@ function handleAddPedido(sheet, pedido) {
     new Date(), // Timestamp inicial
     cli,
     noteP,
-    noteT
+    noteT,
+    rel,
+    tal,
+    vend
   ];
 
   sheet.appendRow(newRow);
@@ -217,6 +230,9 @@ function handleUpdateOrder(sheet, payload) {
       sheet.getRange(row, 7).setValue(payload.nombre_cliente);
       sheet.getRange(row, 8).setValue(payload.notas_pastelero);
       sheet.getRange(row, 9).setValue(payload.notas_tienda);
+      sheet.getRange(row, 10).setValue(payload.relleno);
+      sheet.getRange(row, 11).setValue(payload.talla);
+      sheet.getRange(row, 12).setValue(payload.vendedor);
       
       return createResponse({
         status: "success",
@@ -301,6 +317,33 @@ function handleUpdateProducto(sheet, payload) {
   }
   
   throw new Error("Producto no encontrado para actualizar.");
+}
+
+/**
+ * Obtiene la lista de empleados
+ */
+function handleGetEmpleados(ss) {
+  const sheet = ss.getSheetByName('Empleados');
+  if (!sheet) {
+    return createResponse({ status: "error", message: "Hoja 'Empleados' no encontrada." });
+  }
+
+  const values = sheet.getDataRange().getValues();
+  if (values.length < 2) {
+    return createResponse({ status: "success", data: [] });
+  }
+
+  const rows = values.slice(1);
+  const data = rows.map(row => ({
+    id: row[0],
+    nombre: row[1],
+    activo: row[2] === true || row[2] === 'TRUE' || row[2] === 'SI'
+  }));
+
+  return createResponse({
+    status: "success",
+    data: data
+  });
 }
 
 /**

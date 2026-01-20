@@ -41,6 +41,17 @@ import { Observable, switchMap, of, catchError } from 'rxjs';
               </span>
             </div>
           </div>
+          <div class="info-group">
+            <label>Rellenos disponibles:</label>
+            <div class="tallas-list">
+              <span *ngFor="let rel of producto.rellenos" class="talla-tag relleno">
+                {{ rel }}
+              </span>
+              <span *ngIf="producto.rellenos.length === 0" class="empty">
+                Sin rellenos (producto simple)
+              </span>
+            </div>
+          </div>
         </div>
 
         <div class="actions">
@@ -78,6 +89,7 @@ import { Observable, switchMap, of, catchError } from 'rxjs';
     
     .tallas-list { display: flex; flex-wrap: wrap; gap: 0.75rem; }
     .talla-tag { background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.5rem 1rem; border-radius: 10px; font-weight: 700; color: #475569; }
+    .talla-tag.relleno { background: #fff7ed; border-color: #ffedd5; color: #9a3412; }
     .empty { color: #94a3b8; font-style: italic; }
 
     .actions { margin-top: 2rem; padding: 1.25rem; background: #fefce8; border-radius: 12px; border: 1px solid #fef08a; display: flex; align-items: center; gap: 0.75rem; }

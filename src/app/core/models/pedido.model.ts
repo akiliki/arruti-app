@@ -3,6 +3,8 @@ export type EstadoPedido = 'Pendiente' | 'En Proceso' | 'Producido' | 'Entregado
 export interface Pedido {
   id: string;
   producto: string;
+  talla?: string;   // Nuevo campo
+  relleno?: string; // Nuevo campo
   cantidad: number;
   fechaEntrega: Date;
   estado: EstadoPedido;
@@ -10,6 +12,7 @@ export interface Pedido {
   nombreCliente?: string;
   notasPastelero?: string;
   notasTienda?: string;
+  vendedor?: string; // Nuevo campo: quien recoge el pedido
 }
 
 export interface ProduccionStats {

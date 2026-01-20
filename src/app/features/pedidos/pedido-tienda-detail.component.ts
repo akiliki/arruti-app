@@ -31,6 +31,8 @@ import { Observable, map, switchMap, BehaviorSubject } from 'rxjs';
             <div class="info-group">
               <label>Producto</label>
               <div class="value">{{ pedido.producto }}</div>
+              <div class="talla-badge-detail" *ngIf="pedido.talla">Ración: {{ pedido.talla }}</div>
+              <div class="relleno-detail" *ngIf="pedido.relleno">Relleno de: <strong>{{ pedido.relleno }}</strong></div>
             </div>
 
             <div class="info-group">
@@ -41,6 +43,19 @@ import { Observable, map, switchMap, BehaviorSubject } from 'rxjs';
             <div class="info-group">
               <label>Fecha de Entrega</label>
               <div class="value">{{ pedido.fechaEntrega | date:'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+
+            <div class="info-group" *ngIf="pedido.vendedor">
+              <label>Atendido por</label>
+              <div class="value">
+                <span class="vendedor-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  {{ pedido.vendedor }}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -95,6 +110,32 @@ import { Observable, map, switchMap, BehaviorSubject } from 'rxjs';
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; padding: 2rem; }
     .info-group label { display: block; font-size: 0.8rem; color: #666; text-transform: uppercase; font-weight: bold; margin-bottom: 0.5rem; }
     .value { font-size: 1.2rem; color: #333; }
+    .talla-badge-detail {
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+        background: #f1f2f6;
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+        margin-right: 8px;
+        font-weight: 600;
+    }
+    .relleno-detail {
+      margin-top: 0.5rem;
+      font-size: 1rem;
+      color: #e67e22;
+      background: #fff3e0;
+      padding: 0.5rem;
+      border-radius: 6px;
+      display: inline-block;
+      border: 1px solid #ffeaa7;
+    }
+    .vendedor-badge {
+      display: inline-flex; align-items: center; gap: 6px; 
+      background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 6px;
+      font-size: 1rem; font-weight: 500;
+      svg { color: #22c55e; }
+    }
     .value.highlight { color: #d35400; font-weight: bold; font-size: 1.5rem; }
 
     .notes-section { padding: 0 2rem 2rem; display: flex; flex-direction: column; gap: 1rem; }

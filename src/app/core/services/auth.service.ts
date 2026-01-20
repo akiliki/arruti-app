@@ -20,7 +20,7 @@ export class AuthService {
   login(email: string, password: string): Observable<boolean> {
     // Mock login logic
     const mockUsers: any[] = [
-      { email: 'admin@arruti.com', password: 'admin', nombre: 'Administrador', perfilId: 'admin' },
+      { email: 'admin@arruti.eus', password: 'admin', nombre: 'Administrador', perfilId: 'admin' },
       { email: 'joxe@arruti.eus', password: 'AupaErreala', nombre: 'Joxe', perfilId: 'obrador' },
       { email: 'sonia@arruti.eus', password: 'IratiArruti', nombre: 'Sonia', perfilId: 'tienda' }
     ];

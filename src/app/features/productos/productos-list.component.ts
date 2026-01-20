@@ -48,7 +48,7 @@ import { Observable, combineLatest, map, startWith } from 'rxjs';
               <td><span class="badge">{{p.familia}}</span></td>
               <td><strong>{{p.producto}}</strong></td>
               <td>{{p.tallasRaciones.join(', ') || '-'}}</td>
-              <td>{{p.rellenos?.join(', ') || '-'}}</td>
+              <td>{{p.rellenos.join(', ') || '-'}}</td>
               <td class="actions-cell">
                 <button class="btn-detail" [routerLink]="['/productos', p.id]">
                   Ver

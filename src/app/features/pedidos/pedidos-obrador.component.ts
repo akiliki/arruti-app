@@ -102,9 +102,17 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
 
           <div class="card-body">
             <div class="quantity">{{ pedido.cantidad }}u.</div>
-            <div class="product-name">{{ pedido.producto }}</div>
+            <div class="product-name">
+              {{ pedido.producto }}
+              <span *ngIf="pedido.talla" class="obrador-talla">({{ pedido.talla }})</span>
+              <div *ngIf="pedido.relleno" class="relleno-info">Relleno de: <strong>{{ pedido.relleno }}</strong></div>
+            </div>
             <div *ngIf="pedido.nombreCliente" class="client-name">{{ pedido.nombreCliente }}</div>
             
+            <div class="vendedor-mini" *ngIf="pedido.vendedor">
+              Atendido por: <strong>{{ pedido.vendedor }}</strong>
+            </div>
+
             <div *ngIf="pedido.notasPastelero" class="baker-notes">
               <strong>NOTA:</strong> {{ pedido.notasPastelero }}
             </div>
@@ -456,7 +464,28 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
     .card-body { padding: 15px; flex-grow: 1; }
     .quantity { font-size: 1.8rem; font-weight: 800; color: #d35400; line-height: 1; margin-bottom: 5px; }
     .product-name { font-size: 1.2rem; font-weight: bold; color: #2c3e50; margin-bottom: 2px; }
-    .client-name { font-size: 0.9rem; color: #7f8c8d; margin-bottom: 10px; font-style: italic; }
+    .obrador-talla { color: #d35400; font-size: 1rem; margin-left: 5px; }
+    .relleno-info {
+      font-size: 0.9rem;
+      color: #e67e22;
+      background: #fff3e0;
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin-top: 5px;
+      border: 1px solid #ffeaa7;
+      display: inline-block;
+      font-weight: 500;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .client-name { font-size: 0.9rem; color: #7f8c8d; margin-bottom: 2px; font-style: italic; }
+    
+    .vendedor-mini {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-bottom: 8px;
+      strong { color: #64748b; }
+    }
     
     .baker-notes { 
       background: #fff9c4; 
@@ -575,7 +604,7 @@ export class PedidosObradorComponent implements OnInit {
       map(pedidos => {
         return pedidos
           .filter(p => this.activeStatuses.length === 0 || this.activeStatuses.includes(p.estado))
-          .sort((a, b) => a.fechaEntrega.getTime() - b.fechaEntrega.getTime());
+          .sort((a, b) => new Date(a.fechaEntrega).getTime() - new Date(b.fechaEntrega).getTime());
       })
     );
 
@@ -585,8 +614,11 @@ export class PedidosObradorComponent implements OnInit {
         const limit = new Date(now.getTime() + (this.upcomingThresholdHours * 60 * 60 * 1000));
         return pedidos
           .filter(p => p.estado === 'Pendiente')
-          .filter(p => p.fechaEntrega > now && p.fechaEntrega <= limit)
-          .sort((a, b) => a.fechaEntrega.getTime() - b.fechaEntrega.getTime());
+          .filter(p => {
+            const f = new Date(p.fechaEntrega);
+            return f > now && f <= limit;
+          })
+          .sort((a, b) => new Date(a.fechaEntrega).getTime() - new Date(b.fechaEntrega).getTime());
       })
     );
 

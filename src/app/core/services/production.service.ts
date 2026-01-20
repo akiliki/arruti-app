@@ -94,8 +94,11 @@ export class ProductionService {
     const newPedido: Pedido = {
       id,
       producto: pedido.producto || '',
+      talla: pedido.talla || '',
+      relleno: pedido.relleno || '',
       cantidad: pedido.cantidad || 0,
       fechaEntrega,
+      vendedor: pedido.vendedor || '',
       estado: pedido.estado || 'Pendiente',
       nombreCliente: pedido.nombreCliente || '',
       notasPastelero: pedido.notasPastelero || '',
@@ -130,10 +133,15 @@ export class ProductionService {
   }
 
   updatePedido(pedido: Pedido): Observable<any> {
+    // Normalizar fecha si viene como string (desde el formulario)
+    if (typeof pedido.fechaEntrega === 'string') {
+      pedido.fechaEntrega = new Date(pedido.fechaEntrega);
+    }
+
     // 1. ACTUALIZACIÓN OPTIMISTA
     const previousPedidos = this.pedidosState.value;
     this.pedidosState.next(
-      previousPedidos.map(p => p.id === pedido.id ? pedido : p)
+      previousPedidos.map(p => p.id === pedido.id ? { ...pedido } : p)
     );
 
     const payload = {

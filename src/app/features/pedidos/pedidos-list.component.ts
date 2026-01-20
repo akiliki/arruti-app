@@ -108,6 +108,7 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
                     <th>PRODUCTO</th>
                     <th>CANT.</th>
                     <th>FECHA</th>
+                    <th>VENDEDOR</th>
                     <th>ESTADO</th>
                     <th class="text-right">ACCIONES</th>
                   </tr>
@@ -125,11 +126,24 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
                         </div>
                       </div>
                     </td>
-                    <td class="product-name">{{ pedido.producto }}</td>
+                    <td class="product-name">
+                      {{ pedido.producto }}
+                      <span *ngIf="pedido.talla" class="talla-badge">{{ pedido.talla }}</span>
+                      <span *ngIf="pedido.relleno" class="relleno-tag">{{ pedido.relleno }}</span>
+                    </td>
                     <td class="qty-cell">{{ pedido.cantidad }}</td>
                     <td class="date-cell">
                       <span class="time">{{ pedido.fechaEntrega | date:'HH:mm' }}</span>
                       <span class="full-date">{{ pedido.fechaEntrega | date:'dd/MM' }}</span>
+                    </td>
+                    <td class="vendedor-cell">
+                      <span class="vendedor-badge" *ngIf="pedido.vendedor">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                          <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        {{ pedido.vendedor }}
+                      </span>
                     </td>
                     <td>
                       <span class="status-badge" [attr.data-status]="pedido.estado.toLowerCase().replace(' ', '-')">
@@ -178,7 +192,17 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
                 <div class="card-body">
                   <div class="product-info">
                     <span class="qty">{{ pedido.cantidad }}x</span>
-                    <span class="product">{{ pedido.producto }}</span>
+                    <span class="product">
+                      {{ pedido.producto }}
+                      <span *ngIf="pedido.relleno" class="relleno-tag">{{ pedido.relleno }}</span>
+                    </span>
+                  </div>
+                  <div class="vendedor-info" *ngIf="pedido.vendedor">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span>Atendido por: <strong>{{ pedido.vendedor }}</strong></span>
                   </div>
                   <div class="card-notes" *ngIf="pedido.notasPastelero || pedido.notasTienda">
                     <div *ngIf="pedido.notasPastelero" class="mini-note pastel">P: {{ pedido.notasPastelero }}</div>
@@ -412,6 +436,52 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
     .mini-note.tienda { background: #f0f9ff; color: #075985; border: 1px solid #bae6fd; }
 
     .product-name { font-weight: 500; }
+    .talla-badge {
+      background: #f1f2f6;
+      color: #2f3542;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      margin-left: 8px;
+      border: 1px solid #dfe4ea;
+    }
+    .relleno-tag {
+      background: #fff3e0;
+      color: #e67e22;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      margin-left: 8px;
+      border: 1px solid #ffeaa7;
+      text-transform: uppercase;
+    }
+
+    .vendedor-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #f0fdf4;
+      color: #166534;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      svg { color: #22c55e; }
+    }
+
+    .vendedor-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      strong { color: var(--primary); }
+      svg { color: #94a3b8; }
+    }
+
     .qty-cell { font-weight: 700; color: var(--accent); }
     
     .date-cell .time { display: block; font-weight: 700; font-size: 1rem; }

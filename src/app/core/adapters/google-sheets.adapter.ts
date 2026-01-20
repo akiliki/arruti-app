@@ -1,12 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Pedido, ProduccionStats, EstadoPedido } from '../models/pedido.model';
 import { Producto } from '../models/producto.model';
+import { Empleado } from '../models/empleado.model';
 
 interface ApiResponse {
   status: string;
   data: Array<{
     id: string;
     producto: string;
+    talla?: string;
+    relleno?: string;
     cantidad: number;
     fecha: string;
     estado_actual: string;
@@ -14,6 +17,7 @@ interface ApiResponse {
     nombre_cliente?: string;
     notas_pastelero?: string;
     notas_tienda?: string;
+    vendedor?: string;
   }>;
   stats: {
     pendientes: number;
@@ -46,13 +50,16 @@ export class GoogleSheetsAdapter {
     return response.data.map(item => ({
       id: item.id,
       producto: item.producto,
+      talla: item.talla,
+      relleno: item.relleno,
       cantidad: item.cantidad,
       fechaEntrega: new Date(item.fecha),
       estado: this.mapEstado(item.estado_actual),
       fechaActualizacion: item.fecha_actualizacion ? new Date(item.fecha_actualizacion) : undefined,
       nombreCliente: item.nombre_cliente,
       notasPastelero: item.notas_pastelero,
-      notasTienda: item.notas_tienda
+      notasTienda: item.notas_tienda,
+      vendedor: item.vendedor
     }));
   }
 
@@ -116,18 +123,32 @@ export class GoogleSheetsAdapter {
   }
 
   /**
+   * Transforma empleados de la API al modelo de dominio
+   */
+  adaptEmpleados(response: any): Empleado[] {
+    return (response.data || []).map((item: any) => ({
+      id: item.id,
+      nombre: item.nombre,
+      activo: !!item.activo
+    }));
+  }
+
+  /**
    * Prepara un pedido para ser enviado a la API
    */
   prepareForPost(pedido: Partial<Pedido>): any {
     return {
       id: pedido.id,
       producto: pedido.producto,
+      talla: pedido.talla || '',
+      relleno: pedido.relleno || '',
       cantidad: pedido.cantidad,
       fechaEntrega: pedido.fechaEntrega instanceof Date ? pedido.fechaEntrega.toISOString() : pedido.fechaEntrega,
       estado: pedido.estado || 'Pendiente',
       nombre_cliente: pedido.nombreCliente || '',
       notas_pastelero: pedido.notasPastelero || '',
-      notas_tienda: pedido.notasTienda || ''
+      notas_tienda: pedido.notasTienda || '',
+      vendedor: pedido.vendedor || ''
     };
   }
 

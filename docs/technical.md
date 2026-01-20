@@ -19,6 +19,20 @@ El sistema utiliza Google Sheets como base de datos centralizada.
 | Cantidad | Number | Unidades solicitadas |
 | Fecha_Entrega | Date | Fecha comprometida |
 | Estado | String | Pendiente, En Proceso, Finalizado |
+| Fecha_Act | DateTime | Última actualización |
+| Cliente | String | Nombre del cliente |
+| Notas_Pastelero | String | Instrucciones para obrador |
+| Notas_Tienda | String | Comentarios de tienda |
+| Relleno | String | Relleno seleccionado para el pedido |
+| Talla | String | Ración o talla seleccionada |
+| Vendedor | String | Nombre de la persona que atendió al cliente |
+
+#### Hoja: `Empleados`
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| ID_Empleado | String | Identificador único |
+| Nombre | String | Nombre completo |
+| Activo | String | "SI" o "NO" |
 
 #### Hoja: `Produccion_Diaria`
 | Columna | Tipo | Descripción |

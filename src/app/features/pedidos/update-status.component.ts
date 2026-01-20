@@ -29,6 +29,10 @@ import { Observable, map, switchMap, catchError, of, take } from 'rxjs';
           <label>Fecha de Entrega:</label>
           <span>{{ pedido.fechaEntrega | date:'dd/MM/yyyy' }}</span>
         </div>
+        <div class="detail" *ngIf="pedido.vendedor">
+          <label>Atendido por:</label>
+          <strong>{{ pedido.vendedor }}</strong>
+        </div>
         <div class="detail">
           <label>Estado Actual:</label>
           <span class="badge" [ngClass]="pedido.estado.toLowerCase().replace(' ', '-')">
