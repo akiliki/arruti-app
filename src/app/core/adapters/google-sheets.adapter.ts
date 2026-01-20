@@ -7,6 +7,7 @@ interface ApiResponse {
   status: string;
   data: Array<{
     id: string;
+    id_grupo?: string;
     producto: string;
     talla?: string;
     relleno?: string;
@@ -18,6 +19,7 @@ interface ApiResponse {
     notas_pastelero?: string;
     notas_tienda?: string;
     vendedor?: string;
+    guardado_tienda?: boolean | string;
   }>;
   stats: {
     pendientes: number;
@@ -49,18 +51,47 @@ export class GoogleSheetsAdapter {
   adaptPedidos(response: ApiResponse): Pedido[] {
     return response.data.map(item => ({
       id: item.id,
+      idGrupo: item.id_grupo,
       producto: item.producto,
       talla: item.talla,
       relleno: item.relleno,
       cantidad: item.cantidad,
-      fechaEntrega: new Date(item.fecha),
+      fechaEntrega: this.parseDate(item.fecha),
       estado: this.mapEstado(item.estado_actual),
-      fechaActualizacion: item.fecha_actualizacion ? new Date(item.fecha_actualizacion) : undefined,
+      fechaActualizacion: item.fecha_actualizacion ? this.parseDate(item.fecha_actualizacion) : undefined,
       nombreCliente: item.nombre_cliente,
       notasPastelero: item.notas_pastelero,
       notasTienda: item.notas_tienda,
-      vendedor: item.vendedor
+      vendedor: item.vendedor,
+      guardadoEnTienda: item.guardado_tienda === true || item.guardado_tienda === 'TRUE' || item.guardado_tienda === 'SI'
     }));
+  }
+
+  private parseDate(dateStr: any): Date {
+    if (!dateStr) return new Date();
+    if (dateStr instanceof Date) return dateStr;
+    
+    // Si ya es un ISO string o formato estándar que entiende Date
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) return d;
+    
+    // Si viene en formato DD/MM/YYYY (común en Sheets de España)
+    if (typeof dateStr === 'string' && dateStr.includes('/')) {
+      const parts = dateStr.split(' ')[0].split('/');
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+        const timePart = dateStr.split(' ')[1] || '00:00:00';
+        const timeParts = timePart.split(':');
+        return new Date(year, month, day, 
+          parseInt(timeParts[0] || '0', 10), 
+          parseInt(timeParts[1] || '0', 10), 
+          parseInt(timeParts[2] || '0', 10));
+      }
+    }
+    
+    return d; // Si todo falla devuelve la Invalid Date o lo que salió al inicio
   }
 
   /**
@@ -139,6 +170,7 @@ export class GoogleSheetsAdapter {
   prepareForPost(pedido: Partial<Pedido>): any {
     return {
       id: pedido.id,
+      id_grupo: pedido.idGrupo || '',
       producto: pedido.producto,
       talla: pedido.talla || '',
       relleno: pedido.relleno || '',
@@ -148,18 +180,33 @@ export class GoogleSheetsAdapter {
       nombre_cliente: pedido.nombreCliente || '',
       notas_pastelero: pedido.notasPastelero || '',
       notas_tienda: pedido.notasTienda || '',
-      vendedor: pedido.vendedor || ''
+      vendedor: pedido.vendedor || '',
+      guardado_tienda: pedido.guardadoEnTienda ? 'SI' : 'NO'
     };
   }
 
   private mapEstado(estado: string): EstadoPedido {
-    switch (estado) {
-      case 'Pendiente': return 'Pendiente';
-      case 'En Proceso': return 'En Proceso';
-      case 'Producido': return 'Producido';
-      case 'Entregado': return 'Entregado';
-      case 'Finalizado': return 'Producido'; // Compatibilidad con datos antiguos
-      default: return 'Pendiente';
+    if (!estado) return 'Pendiente';
+    const s = String(estado).trim().toLowerCase();
+    
+    switch (s) {
+      case 'pendiente': 
+        return 'Pendiente';
+      case 'en proceso': 
+      case 'en curso': 
+      case 'horno':
+        return 'En Proceso';
+      case 'terminado': 
+      case 'producido': 
+      case 'finalizado': 
+      case 'listo':
+        return 'Terminado';
+      case 'entregado': 
+        return 'Entregado';
+      case 'cancelado': 
+        return 'Cancelado';
+      default: 
+        return 'Pendiente';
     }
   }
 }

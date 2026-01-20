@@ -82,8 +82,9 @@ import { Observable, map, switchMap, catchError, of, take } from 'rxjs';
     .badge { padding: 4px 12px; border-radius: 12px; font-size: 0.9rem; font-weight: bold; }
     .badge.pendiente { background: #fff3cd; color: #856404; }
     .badge.en-proceso { background: #cce5ff; color: #004085; }
-    .badge.producido { background: #d4edda; color: #155724; }
+    .badge.producido, .badge.terminado { background: #d4edda; color: #155724; }
     .badge.entregado { background: #e2e3e5; color: #383d41; }
+    .badge.cancelado { background: #f8d7da; color: #721c24; }
 
     .status-actions { text-align: center; }
     .btn-group { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
@@ -97,13 +98,17 @@ import { Observable, map, switchMap, catchError, of, take } from 'rxjs';
     .btn-status.en-proceso:hover:not(:disabled) { background: #cce5ff; }
     .btn-status.en-proceso.active { background: #cce5ff; border-color: #004085; }
 
-    .btn-status.producido { border-color: #c3e6cb; color: #155724; }
-    .btn-status.producido:hover:not(:disabled) { background: #d4edda; }
-    .btn-status.producido.active { background: #d4edda; border-color: #155724; }
+    .btn-status.producido, .btn-status.terminado { border-color: #c3e6cb; color: #155724; }
+    .btn-status.producido:hover:not(:disabled), .btn-status.terminado:hover:not(:disabled) { background: #d4edda; }
+    .btn-status.producido.active, .btn-status.terminado.active { background: #d4edda; border-color: #155724; }
 
     .btn-status.entregado { border-color: #d6d8db; color: #383d41; }
     .btn-status.entregado:hover:not(:disabled) { background: #e2e3e5; }
     .btn-status.entregado.active { background: #e2e3e5; border-color: #383d41; }
+
+    .btn-status.cancelado { border-color: #f5c6cb; color: #721c24; }
+    .btn-status.cancelado:hover:not(:disabled) { background: #f8d7da; }
+    .btn-status.cancelado.active { background: #f8d7da; border-color: #721c24; }
 
     .btn-status:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -117,7 +122,7 @@ export class UpdateStatusComponent implements OnInit {
   private productionService = inject(ProductionService);
 
   pedido$!: Observable<Pedido>;
-  estados: EstadoPedido[] = ['Pendiente', 'En Proceso', 'Producido', 'Entregado'];
+  estados: EstadoPedido[] = ['Pendiente', 'En Proceso', 'Terminado', 'Entregado', 'Cancelado'];
   updating = false;
   error: string | null = null;
   errorMessage: string | null = null;

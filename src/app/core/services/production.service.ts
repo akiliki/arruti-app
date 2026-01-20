@@ -62,8 +62,10 @@ export class ProductionService {
   }
 
   getPedidos(): Observable<Pedido[]> {
-    const refresh$ = this.refreshPedidos();
-    return this.pedidosLoaded ? this.pedidosState.asObservable() : refresh$;
+    if (this.pedidosLoaded) {
+      return this.pedidosState.asObservable();
+    }
+    return this.refreshPedidos();
   }
 
   refreshPedidos(): Observable<Pedido[]> {
@@ -78,6 +80,10 @@ export class ProductionService {
       catchError(error => {
         console.error('Error fetching pedidos:', error);
         return throwError(() => new Error('No se pudieron cargar los pedidos.'));
+      }),
+      // Evitar múltiples llamadas simultáneas si se suscribe varias veces antes de que termine la primera
+      tap({
+        complete: () => this.pedidosLoaded = true
       })
     );
   }
@@ -93,6 +99,7 @@ export class ProductionService {
 
     const newPedido: Pedido = {
       id,
+      idGrupo: pedido.idGrupo || '',
       producto: pedido.producto || '',
       talla: pedido.talla || '',
       relleno: pedido.relleno || '',
@@ -102,7 +109,8 @@ export class ProductionService {
       estado: pedido.estado || 'Pendiente',
       nombreCliente: pedido.nombreCliente || '',
       notasPastelero: pedido.notasPastelero || '',
-      notasTienda: pedido.notasTienda || ''
+      notasTienda: pedido.notasTienda || '',
+      guardadoEnTienda: pedido.guardadoEnTienda || false
     } as Pedido;
     
     // 1. ACTUALIZACIÓN OPTIMISTA
@@ -126,6 +134,50 @@ export class ProductionService {
       }),
       catchError(error => {
         // 2. ROLLBACK
+        this.pedidosState.next(previousPedidos);
+        return throwError(() => new Error(error.message || 'Error al guardar. Se ha revertido el cambio.'));
+      })
+    );
+  }
+
+  addPedidos(pedidos: Partial<Pedido>[]): Observable<any> {
+    const now = new Date();
+    const preparedPedidos: Pedido[] = pedidos.map(p => ({
+      id: p.id || crypto.randomUUID(),
+      idGrupo: p.idGrupo || '',
+      producto: p.producto || '',
+      talla: p.talla || '',
+      relleno: p.relleno || '',
+      cantidad: p.cantidad || 1,
+      fechaEntrega: p.fechaEntrega instanceof Date ? p.fechaEntrega : new Date(p.fechaEntrega || now),
+      estado: p.estado || 'Pendiente',
+      nombreCliente: p.nombreCliente || '',
+      notasPastelero: p.notasPastelero || '',
+      notasTienda: p.notasTienda || '',
+      vendedor: p.vendedor || '',
+      guardadoEnTienda: p.guardadoEnTienda || false,
+      fechaActualizacion: now
+    }));
+
+    const previousPedidos = this.pedidosState.value;
+    this.pedidosState.next([...preparedPedidos, ...previousPedidos]);
+
+    const payload = {
+      action: 'addPedidos',
+      pedidos: preparedPedidos.map(p => this.adapter.prepareForPost(p))
+    };
+
+    return this.http.post<any>(this.apiUrl, JSON.stringify(payload), {
+      headers: new HttpHeaders({ 'Content-Type': 'text/plain;charset=utf-8' })
+    }).pipe(
+      map(response => {
+        if (response.status === 'error') throw new Error(response.message || 'Error en el servidor');
+        return response;
+      }),
+      tap(() => {
+        this.statsLoaded = false;
+      }),
+      catchError(error => {
         this.pedidosState.next(previousPedidos);
         return throwError(() => new Error(error.message || 'Error al guardar. Se ha revertido el cambio.'));
       })
@@ -163,6 +215,39 @@ export class ProductionService {
         // 2. ROLLBACK
         this.pedidosState.next(previousPedidos);
         return throwError(() => new Error(error.message || 'Error al actualizar. Se ha revertido el cambio.'));
+      })
+    );
+  }
+
+  updatePedidos(pedidos: Pedido[]): Observable<any> {
+    const now = new Date();
+    const previousPedidos = this.pedidosState.value;
+    
+    // Actualización optimista
+    const updatedPedidos = previousPedidos.map(p => {
+      const match = pedidos.find(up => up.id === p.id);
+      return match ? { ...p, ...match, fechaActualizacion: now } : p;
+    });
+    this.pedidosState.next(updatedPedidos);
+
+    const payload = {
+      action: 'updateMultipleOrders',
+      pedidos: pedidos.map(p => this.adapter.prepareForPost(p))
+    };
+
+    return this.http.post<any>(this.apiUrl, JSON.stringify(payload), {
+      headers: new HttpHeaders({ 'Content-Type': 'text/plain;charset=utf-8' })
+    }).pipe(
+      map(response => {
+        if (response.status === 'error') throw new Error(response.message || 'Error al actualizar');
+        return response;
+      }),
+      tap(() => {
+        this.statsLoaded = false;
+      }),
+      catchError(error => {
+        this.pedidosState.next(previousPedidos);
+        return throwError(() => new Error(error.message));
       })
     );
   }

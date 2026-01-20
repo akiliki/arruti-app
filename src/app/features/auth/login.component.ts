@@ -93,7 +93,9 @@ export class LoginComponent {
       const { email, password } = this.loginForm.value;
       this.authService.login(email, password).subscribe(success => {
         if (success) {
-          this.router.navigate(['/pedidos']);
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          const defaultRoute = this.authService.getDefaultRoute(user.perfilId);
+          this.router.navigate([defaultRoute]);
         } else {
           this.error = 'Credenciales incorrectas';
         }

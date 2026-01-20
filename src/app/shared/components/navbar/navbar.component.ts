@@ -10,15 +10,28 @@ import { AuthService } from '../../../core/services/auth.service';
   template: `
     <nav class="navbar" *ngIf="authService.currentUser$ | async as user">
       <div class="navbar-brand">
-        <a routerLink="/pedidos" class="logo">Pastelería Arruti</a>
+        <a [routerLink]="authService.getDefaultRoute(user.perfilId)" class="logo">Pastelería Arruti</a>
+        <button class="navbar-toggle" (click)="toggleMenu()" aria-label="Toggle navigation">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </button>
       </div>
-      <ul class="navbar-nav">
-        <li><a routerLink="/pedidos" routerLinkActive="active">Tienda</a></li>
-        <li><a routerLink="/obrador" routerLinkActive="active">Obrador</a></li>
-        <li><a routerLink="/productos" routerLinkActive="active">Catálogo</a></li>
-        <li><a routerLink="/seguridad" routerLinkActive="active">Seguridad</a></li>
+      <ul class="navbar-nav" [class.open]="isMenuOpen">
+        <li *ngIf="authService.hasPermission(user.perfilId, 'tienda')">
+          <a routerLink="/pedidos" routerLinkActive="active" (click)="isMenuOpen = false">Tienda</a>
+        </li>
+        <li *ngIf="authService.hasPermission(user.perfilId, 'obrador')">
+          <a routerLink="/obrador" routerLinkActive="active" (click)="isMenuOpen = false">Obrador</a>
+        </li>
+        <li *ngIf="authService.hasPermission(user.perfilId, 'catalogo')">
+          <a routerLink="/productos" routerLinkActive="active" (click)="isMenuOpen = false">Catálogo</a>
+        </li>
+        <li *ngIf="authService.hasPermission(user.perfilId, 'seguridad')">
+          <a routerLink="/seguridad" routerLinkActive="active" (click)="isMenuOpen = false">Seguridad</a>
+        </li>
         <li class="user-info">
-          <span>{{ user.nombre }}</span>
+          <span class="user-name">{{ user.nombre }}</span>
           <button (click)="logout()" class="btn-logout">Salir</button>
         </li>
       </ul>
@@ -34,12 +47,36 @@ import { AuthService } from '../../../core/services/auth.service';
       padding: 0 1rem;
       height: 64px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 1000;
+      position: relative;
+    }
+    .navbar-brand {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .logo {
       font-size: 1.5rem;
       font-weight: bold;
       color: white;
       text-decoration: none;
+    }
+    .navbar-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 30px;
+      height: 21px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+    .navbar-toggle .bar {
+      height: 3px;
+      width: 100%;
+      background-color: white;
+      border-radius: 10px;
     }
     .navbar-nav {
       list-style: none;
@@ -83,12 +120,66 @@ import { AuthService } from '../../../core/services/auth.service';
     .btn-logout:hover {
       background: rgba(255,255,255,0.1);
     }
+
+    @media (max-width: 768px) {
+      .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+        height: auto;
+        padding: 1rem;
+      }
+      .navbar-brand {
+        width: 100%;
+      }
+      .navbar-toggle {
+        display: flex;
+      }
+      .navbar-nav {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        gap: 0;
+        margin-top: 1rem;
+      }
+      .navbar-nav.open {
+        display: flex;
+      }
+      .navbar-nav li {
+        width: 100%;
+      }
+      .navbar-nav li a {
+        display: block;
+        padding: 0.75rem 0;
+        width: 100%;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+      .user-info {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        padding-top: 1rem;
+        width: 100%;
+      }
+      .btn-logout {
+        width: auto;
+      }
+    }
   `]
 })
 export class NavbarComponent {
+  isMenuOpen = false;
+
   constructor(public authService: AuthService, private router: Router) {}
 
+  toggleMenu() {
+    this.isMenuOpen = !this.isMenuOpen;
+  }
+
   logout() {
+    this.isMenuOpen = false;
     this.authService.logout();
     this.router.navigate(['/login']);
   }

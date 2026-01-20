@@ -79,13 +79,24 @@ import { Observable, map, switchMap, BehaviorSubject } from 'rxjs';
             
             <button *ngIf="pedido.estado === 'En Proceso'" 
                     class="btn-action finish" 
-                    (click)="updateStatus(pedido.id, 'Producido')"
+                    (click)="updateStatus(pedido.id, 'Terminado')"
                     [disabled]="isUpdating">
               {{ isUpdating ? 'Actualizando...' : 'TERMINAR Y LISTO PARA TIENDA' }}
             </button>
 
-            <div class="done-message" *ngIf="pedido.estado === 'Producido' || pedido.estado === 'Entregado'">
+            <button *ngIf="pedido.estado === 'Pendiente' || pedido.estado === 'En Proceso'"
+                    class="btn-cancel-link"
+                    (click)="cancelarPedido(pedido)"
+                    [disabled]="isUpdating">
+              CANCELAR ESTA PIEZA
+            </button>
+
+            <div class="done-message" *ngIf="pedido.estado === 'Terminado' || pedido.estado === 'Entregado'">
                Pedido finalizado por obrador ✓
+            </div>
+            
+            <div class="cancelled-message" *ngIf="pedido.estado === 'Cancelado'">
+               ESTE PEDIDO HA SIDO CANCELADO
             </div>
           </div>
 
@@ -111,7 +122,8 @@ import { Observable, map, switchMap, BehaviorSubject } from 'rxjs';
     .status-banner { padding: 0.8rem; text-align: center; font-weight: bold; background: #f8f9fa; border-bottom: 1px solid #eee; }
     .status-banner.pendiente { color: #856404; }
     .status-banner.en-proceso { color: #004085; }
-    .status-banner.producido { color: #155724; }
+    .status-banner.producido, .status-banner.terminado { color: #155724; }
+    .status-banner.cancelado { color: #c53030; }
 
     .main-info { padding: 2rem; text-align: center; background: #fffcf9; }
     .qty { font-size: 3rem; font-weight: 900; color: #d35400; line-height: 1; }
@@ -165,7 +177,13 @@ import { Observable, map, switchMap, BehaviorSubject } from 'rxjs';
     .btn-action.finish { background: #2ecc71; color: white; }
     .btn-action:disabled { background: #bdc3c7; cursor: not-allowed; }
     
+    .btn-cancel-link {
+       display: block; width: 100%; padding: 10px; margin-top: 15px; background: none; border: 1px solid #fab1a0; color: #e17055; border-radius: 8px; font-weight: bold; cursor: pointer;
+    }
+    .btn-cancel-link:hover { background: #fff5f5; color: #d63031; border-color: #ff7675; }
+    
     .done-message { text-align: center; color: #27ae60; font-weight: bold; font-size: 1.2rem; padding: 1rem; }
+    .cancelled-message { text-align: center; color: #e17055; font-weight: bold; font-size: 1.2rem; padding: 1rem; border: 2px solid #fab1a0; border-radius: 8px; background: #fff5f5; }
 
     .metadata { padding: 1rem 2rem; background: #f8f9fa; border-top: 1px solid #eee; display: flex; justify-content: space-between; color: #95a5a6; font-size: 0.8rem; }
     .loading-state { text-align: center; padding: 4rem; color: #666; }
@@ -191,6 +209,12 @@ export class PedidoObradorDetailComponent implements OnInit {
         );
       })
     );
+  }
+
+  cancelarPedido(p: Pedido) {
+    if (confirm(`¿Estás seguro de que deseas CANCELAR este producto (${p.cantidad} ${p.producto})?`)) {
+      this.updateStatus(p.id, 'Cancelado');
+    }
   }
 
   updateStatus(id: string, nuevoEstado: EstadoPedido) {

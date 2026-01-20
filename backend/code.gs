@@ -58,14 +58,16 @@ function doGet(e) {
       notas_tienda: row[8],
       relleno: row[9],
       talla: row[10],
-      vendedor: row[11]
+      vendedor: row[11],
+      id_grupo: row[12],
+      guardado_tienda: row[13]
     }));
 
     // Cálculo de estadísticas
     const stats = {
       pendientes: data.filter(p => String(p.estado_actual).trim() === 'Pendiente').length,
       horno: data.filter(p => String(p.estado_actual).trim() === 'En Proceso').length,
-      producidos: data.filter(p => ['Producido', 'Finalizado'].includes(String(p.estado_actual).trim())).length,
+      producidos: data.filter(p => ['Producido', 'Finalizado', 'Terminado'].includes(String(p.estado_actual).trim())).length,
       entregados: data.filter(p => String(p.estado_actual).trim() === 'Entregado').length
     };
 
@@ -133,6 +135,14 @@ function doPost(e) {
       return handleUpdateOrder(sheetPedidos, payload);
     }
 
+    if (payload.action === 'updateMultipleOrders') {
+      return handleUpdateMultipleOrders(sheetPedidos, payload.pedidos);
+    }
+
+    if (payload.action === 'addPedidos') {
+      return handleAddMultiplePedidos(sheetPedidos, payload.pedidos);
+    }
+
     // Acción por defecto: Añadir pedido
     return handleAddPedido(sheetPedidos, payload);
 
@@ -162,8 +172,10 @@ function handleAddPedido(sheet, pedido) {
   const noteP = pedido.notas_pastelero || pedido.notasPastelero || '';
   const noteT = pedido.notas_tienda || pedido.notasTienda || '';
   const vend = pedido.vendedor || '';
+  const idG = pedido.id_grupo || pedido.idGrupo || '';
+  const gT = pedido.guardado_tienda || pedido.guardadoEnTienda || 'NO';
 
-  // Preparar fila: ID, Producto, Cantidad, Fecha, Estado, Fecha Actualización, Cliente, Notas Pastelero, Notas Tienda, Relleno, Talla, Vendedor
+  // Preparar fila: ID, Producto, Cantidad, Fecha, Estado, Fecha Actualización, Cliente, Notas Pastelero, Notas Tienda, Relleno, Talla, Vendedor, ID_Grupo, Guardado_Tienda
   const newRow = [
     id,
     prod,
@@ -176,7 +188,9 @@ function handleAddPedido(sheet, pedido) {
     noteT,
     rel,
     tal,
-    vend
+    vend,
+    idG,
+    gT
   ];
 
   sheet.appendRow(newRow);
@@ -185,6 +199,48 @@ function handleAddPedido(sheet, pedido) {
     status: "success",
     message: "Pedido añadido correctamente",
     data: { id: id }
+  });
+}
+
+/**
+ * Añade múltiples pedidos a la hoja de una vez
+ */
+function handleAddMultiplePedidos(sheet, pedidos) {
+  if (!pedidos || !Array.isArray(pedidos) || pedidos.length === 0) {
+    throw new Error("No se proporcionaron pedidos para añadir.");
+  }
+
+  const lastRow = sheet.getLastRow();
+  const now = new Date();
+  
+  const rowsToAdd = pedidos.map((pedido, index) => {
+    const id = pedido.id || "P-" + (lastRow + 1 + index).toString().padStart(4, '0');
+    
+    return [
+      id,
+      pedido.producto || '',
+      pedido.cantidad || 0,
+      pedido.fechaEntrega || now,
+      pedido.estado || 'Pendiente',
+      now, // Fecha Actualización
+      pedido.nombreCliente || pedido.nombre_cliente || '',
+      pedido.notasPastelero || pedido.notas_pastelero || '',
+      pedido.notasTienda || pedido.notas_tienda || '',
+      pedido.relleno || '',
+      pedido.talla || '',
+      pedido.vendedor || '',
+      pedido.id_grupo || pedido.idGrupo || '',
+      pedido.guardado_tienda || pedido.guardadoEnTienda || 'NO'
+    ];
+  });
+
+  // Usar getRange().setValues() es más eficiente para múltiples filas que appendRow en bucle
+  sheet.getRange(lastRow + 1, 1, rowsToAdd.length, rowsToAdd[0].length).setValues(rowsToAdd);
+
+  return createResponse({
+    status: "success",
+    message: pedidos.length + " pedidos añadidos correctamente",
+    count: pedidos.length
   });
 }
 
@@ -233,6 +289,8 @@ function handleUpdateOrder(sheet, payload) {
       sheet.getRange(row, 10).setValue(payload.relleno);
       sheet.getRange(row, 11).setValue(payload.talla);
       sheet.getRange(row, 12).setValue(payload.vendedor);
+      sheet.getRange(row, 13).setValue(payload.id_grupo || payload.idGrupo || '');
+      sheet.getRange(row, 14).setValue(payload.guardado_tienda || payload.guardadoEnTienda || 'NO');
       
       return createResponse({
         status: "success",
@@ -344,6 +402,58 @@ function handleGetEmpleados(ss) {
     status: "success",
     data: data
   });
+}
+
+function handleUpdateMultipleOrders(sheet, pedidos) {
+  const data = sheet.getDataRange().getValues();
+  const now = new Date();
+  
+  pedidos.forEach(payload => {
+     let row = -1;
+     for (let i = 1; i < data.length; i++) {
+       if (data[i][0] == payload.id) {
+         row = i + 1;
+         break;
+       }
+     }
+     
+     if (row !== -1) {
+        sheet.getRange(row, 2).setValue(payload.producto);
+        sheet.getRange(row, 3).setValue(payload.cantidad);
+        sheet.getRange(row, 4).setValue(payload.fechaEntrega);
+        sheet.getRange(row, 5).setValue(payload.estado);
+        sheet.getRange(row, 6).setValue(now);
+        sheet.getRange(row, 7).setValue(payload.nombre_cliente || payload.nombreCliente || '');
+        sheet.getRange(row, 8).setValue(payload.notas_pastelero || payload.notasPastelero || '');
+        sheet.getRange(row, 9).setValue(payload.notas_tienda || payload.notasTienda || '');
+        sheet.getRange(row, 10).setValue(payload.relleno);
+        sheet.getRange(row, 11).setValue(payload.talla);
+        sheet.getRange(row, 12).setValue(payload.vendedor);
+        sheet.getRange(row, 13).setValue(payload.id_grupo || payload.idGrupo || '');
+        sheet.getRange(row, 14).setValue(payload.guardado_tienda || payload.guardadoEnTienda || 'NO');
+     } else {
+        // SI no existe (es una línea nueva añadida durante la edición), la añadimos
+        const newRow = [
+          payload.id,
+          payload.producto,
+          payload.cantidad,
+          payload.fechaEntrega,
+          payload.estado || 'Pendiente',
+          now,
+          payload.nombre_cliente || payload.nombreCliente || '',
+          payload.notas_pastelero || payload.notasPastelero || '',
+          payload.notas_tienda || payload.notasTienda || '',
+          payload.relleno || '',
+          payload.talla || '',
+          payload.vendedor || '',
+          payload.id_grupo || payload.idGrupo || '',
+          payload.guardado_tienda || payload.guardadoEnTienda || 'NO'
+        ];
+        sheet.appendRow(newRow);
+     }
+  });
+
+  return createResponse({ status: 'success', message: 'Pedidos procesados (actualizados/añadidos)' });
 }
 
 /**

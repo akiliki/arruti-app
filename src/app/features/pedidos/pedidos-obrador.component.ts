@@ -5,7 +5,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ProductionService } from '../../core/services/production.service';
 import { ProductoService } from '../../core/services/producto.service';
 import { Pedido, EstadoPedido } from '../../core/models/pedido.model';
-import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap } from 'rxjs';
+import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, shareReplay, tap, finalize } from 'rxjs';
 
 @Component({
   selector: 'app-pedidos-obrador',
@@ -32,62 +32,95 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
         </div>
       </div>
 
-      <div class="filters">
-        <div class="filter-group">
-          <label>Familia</label>
-          <select [formControl]="familiaFilter">
-            <option value="">Todas las familias</option>
-            <option *ngFor="let f of familias$ | async" [value]="f">{{f}}</option>
-          </select>
-        </div>
-        <div class="filter-group date-col">
-          <label>Fecha de Producción</label>
-          <div class="date-controls">
-            <div class="date-nav">
-              <button class="btn-nav" (click)="changeDay(-1)" title="Anterior">‹</button>
-              <input type="date" [formControl]="fechaFilter">
-              <button class="btn-nav" (click)="changeDay(1)" title="Siguiente">›</button>
-            </div>
-            <button class="btn-today" (click)="setToday()">HOY</button>
+      <div class="filters-container">
+        <div class="filters-header" (click)="showFilters = !showFilters">
+          <div class="filters-title">
+            <span class="filters-icon">🔍</span>
+            <span>Filtros y Búsqueda</span>
           </div>
+          <div class="filters-summary" *ngIf="!showFilters">
+            <span class="badge">{{ familiaFilter.value || 'Todas las familias' }}</span>
+            <span class="badge">{{ fechaFilter.value | date:'dd/MM/yyyy' }}</span>
+            <span class="badge" *ngIf="timeSlotFilter.value">{{ timeSlotFilter.value }}</span>
+          </div>
+          <span class="chevron">{{ showFilters ? '▼' : '▶' }}</span>
         </div>
-        <div class="filter-group states-group">
-          <label>Filtro por Estado</label>
-          <div class="filter-chips" *ngIf="counts$ | async as counts">
-            <button class="chip" [class.active]="isStatusActive('Pendiente')" (click)="toggleStatus('Pendiente')">
-              <span class="chip-label">Falta</span>
-              <span class="chip-icon">🔴</span>
-              <span class="count">{{counts.falta}}</span>
-            </button>
-            <button class="chip" [class.active]="isStatusActive('En Proceso')" (click)="toggleStatus('En Proceso')">
-              <span class="chip-label">En curso</span>
-              <span class="chip-icon">⏳</span>
-              <span class="count">{{counts.enCurso}}</span>
-            </button>
-            <button class="chip" [class.active]="isStatusActive('Producido')" (click)="toggleStatus('Producido')">
-              <span class="chip-label">Terminado</span>
-              <span class="chip-icon">✅</span>
-              <span class="count">{{counts.terminado}}</span>
-            </button>
+
+        <div class="filters" *ngIf="showFilters">
+          <div class="filters-top-row">
+            <div class="filter-group">
+              <label>Familia</label>
+              <select [formControl]="familiaFilter">
+                <option value="">Todas las familias</option>
+                <option *ngFor="let f of familias$ | async" [value]="f">{{f}}</option>
+              </select>
+            </div>
+            
+            <div class="filter-group">
+              <label>Tramo Horario</label>
+              <select [formControl]="timeSlotFilter">
+                <option value="">Cualquier hora</option>
+                <option value="mañana-primera">Primera hora mañana (hasta 9:30)</option>
+                <option value="mañana-media">Media mañana (9:30 - 12:00)</option>
+                <option value="mediodia">Medio día (12:00 - 15:00)</option>
+                <option value="tarde-primera">Primera hora tarde (15:00 - 18:30)</option>
+                <option value="tarde-ultima">Última hora tarde (desde 18:30)</option>
+              </select>
+            </div>
+
+            <div class="filter-group date-col">
+              <label>Fecha de Producción</label>
+              <div class="date-controls">
+                <div class="date-nav">
+                  <button class="btn-nav" (click)="changeDay(-1)" title="Anterior">‹</button>
+                  <input type="date" [formControl]="fechaFilter">
+                  <button class="btn-nav" (click)="changeDay(1)" title="Siguiente">›</button>
+                </div>
+                <button class="btn-today" (click)="setToday()">HOY</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-group states-group">
+            <label>Filtro por Estado</label>
+            <div class="filter-chips" *ngIf="counts$ | async as counts">
+              <button class="chip" [class.active]="isStatusActive('Pendiente')" (click)="toggleStatus('Pendiente')">
+                <span class="chip-icon">🔴</span>
+                <span class="chip-label">Pendiente</span>
+                <span class="count">{{counts.falta}}</span>
+              </button>
+              <button class="chip" [class.active]="isStatusActive('En Proceso')" (click)="toggleStatus('En Proceso')">
+                <span class="chip-icon">⏳</span>
+                <span class="chip-label">En curso</span>
+                <span class="count">{{counts.enCurso}}</span>
+              </button>
+              <button class="chip" [class.active]="isStatusActive('Terminado')" (click)="toggleStatus('Terminado')">
+                <span class="chip-icon">✅</span>
+                <span class="chip-label">Terminado</span>
+                <span class="count">{{counts.terminado}}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="alerts-section" *ngIf="upcomingPedidos$ | async as upcoming">
-        <div class="alert-header" (click)="showUpcomingList = !showUpcomingList">
-          <span class="alert-icon">⚠️</span>
-          <h3>Pedidos próximos sin empezar ({{ upcoming.length }})</h3>
-          <span class="chevron">{{ showUpcomingList ? '▼' : '▶' }}</span>
-        </div>
-        
-        <div class="upcoming-scroll" *ngIf="showUpcomingList && upcoming.length > 0">
-          <div *ngFor="let p of upcoming" class="upcoming-mini-card" (click)="setFechaToPedido(p)">
-            <span class="time">{{ p.fechaEntrega | date:'HH:mm' }}</span>
-            <span class="name">{{ p.producto }}</span>
-            <span class="qty">{{ p.cantidad }}u.</span>
+      <ng-container *ngIf="upcomingPedidos$ | async as upcoming">
+        <div class="alerts-section" *ngIf="upcoming.length > 0">
+          <div class="alert-header" (click)="showUpcomingList = !showUpcomingList">
+            <span class="alert-icon">⚠️</span>
+            <h3>Pedidos próximos sin empezar ({{ upcoming.length }})</h3>
+            <span class="chevron">{{ showUpcomingList ? '▼' : '▶' }}</span>
+          </div>
+          
+          <div class="upcoming-scroll" *ngIf="showUpcomingList">
+            <div *ngFor="let p of upcoming" class="upcoming-mini-card" (click)="setFechaToPedido(p)">
+              <span class="time">{{ p.fechaEntrega | date:'HH:mm' }}</span>
+              <span class="name">{{ p.producto }}</span>
+              <span class="qty">{{ p.cantidad }}u.</span>
+            </div>
           </div>
         </div>
-      </div>
+      </ng-container>
 
       <div *ngIf="filteredPedidos$ | async as pedidos; else loading" class="production-grid">
         <div *ngFor="let pedido of pedidos" 
@@ -127,12 +160,13 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
             </button>
             <button *ngIf="pedido.estado === 'En Proceso'" 
                     class="btn-finish" 
-                    (click)="updateStatus(pedido.id, 'Producido')"
+                    (click)="updateStatus(pedido.id, 'Terminado')"
                     [disabled]="updatingId === pedido.id">
               {{ updatingId === pedido.id ? '...' : 'TERMINAR' }}
             </button>
-            <span *ngIf="pedido.estado === 'Producido'" class="badge-done">PRODUCIDO ✓</span>
+            <span *ngIf="pedido.estado === 'Terminado'" class="badge-done">TERMINADO ✓</span>
             <span *ngIf="pedido.estado === 'Entregado'" class="badge-done">ENTREGADO ✓</span>
+            <span *ngIf="pedido.estado === 'Cancelado'" class="badge-cancelled">CANCELADO</span>
             
             <button class="btn-view-order" [routerLink]="['/obrador/pedidos', pedido.id]">
               VER DETALLE
@@ -213,93 +247,105 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
     .dot.active { background: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); animation: pulse 2s infinite; }
     @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.6; } 100% { transform: scale(1); opacity: 1; } }
 
-  .filters { 
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.5rem; 
-    margin-bottom: 2rem; 
-    background: white; 
-    padding: 1.5rem; 
-    border-radius: 16px; 
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
-    align-items: flex-end;
-  }
-
-  .filter-group { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 0.6rem; 
-    flex: 0 1 auto;
-  }
-
-  .filter-group.date-col {
-    flex: 1 1 auto;
-  }
-
-  .filter-group.states-group {
-    flex: 1 1 auto;
-  }
-
-  @media (min-width: 992px) {
-    .filter-group.date-col {
-      min-width: 380px;
+    .filters-container {
+      margin-bottom: 25px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      background: white;
     }
-    .filter-group.states-group {
-      flex: 1 1 400px;
+
+    .filters-header {
+      padding: 1rem 1.5rem;
+      background: #f8fafc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.2s;
     }
-  }
-    .filter-group label { 
-      font-weight: 800; 
-      font-size: 0.75rem; 
-      color: #64748b; 
-      text-transform: uppercase; 
-      letter-spacing: 0.1em; 
-    }
+    .filters-header:hover { background: #f1f5f9; }
     
+    .filters-title { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; color: #1e293b; }
+    .filters-icon { font-size: 1.1rem; }
+    
+    .filters-summary { display: flex; gap: 0.5rem; }
+    .filters-summary .badge { 
+      background: #e2e8f0; 
+      color: #475569; 
+      padding: 2px 8px; 
+      border-radius: 4px; 
+      font-size: 0.75rem; 
+      font-weight: 600; 
+    }
+
+    .filters { 
+      padding: 1.5rem; 
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .filters-top-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      align-items: flex-end;
+    }
+
+    .filter-group { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 0.6rem;
+      flex: 1;
+      min-width: 250px;
+    }
+    .filter-group label { 
+      font-size: 0.85rem; 
+      font-weight: 800; 
+      color: #64748b; 
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+
     .date-controls {
       display: flex;
-      align-items: center;
       gap: 10px;
+      align-items: center;
     }
-
     .date-nav {
       display: flex;
-      align-items: center;
-      background: #f8fafc;
+      background: white;
       border: 1px solid #e2e8f0;
       border-radius: 12px;
-      height: 44px;
+      min-width: 224px;
       overflow: hidden;
-      flex: 1;
-      min-width: 210px;
+      flex-grow: 1;
+      height: 44px;
     }
-    .date-nav input { 
-      border: none; 
-      background: white;
-      padding: 0 8px; 
-      font-weight: 700; 
-      outline: none; 
-      flex: 1;
-      height: 100%;
-      min-width: 140px;
-      font-size: 1rem;
+    input[type="date"] {
+      border: none;
+      padding: 0 10px;
+      height: 44px;
+      font-size: 0.95rem;
+      font-weight: 600;
       color: #1e293b;
-      text-align: center;
-      border-left: 1px solid #e2e8f0;
-      border-right: 1px solid #e2e8f0;
+      outline: none;
+      width: 100%;
     }
     .btn-nav {
-      background: #f8fafc;
+      background: white;
       border: none;
       width: 44px;
-      height: 100%;
-      cursor: pointer;
+      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #64748b;
       font-size: 1.4rem;
       transition: all 0.2s;
+      cursor: pointer;
     }
     .btn-nav:hover { background: #f1f5f9; color: #1e293b; }
 
@@ -317,7 +363,6 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
       box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
     }
     .btn-today:hover { background: #2563eb; transform: translateY(-1px); }
-    .btn-today:active { transform: translateY(0); }
 
     select { 
       padding: 0 0.8rem;
@@ -326,64 +371,77 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
       width: 100%; 
       height: 44px;
       font-size: 0.95rem; 
-      background: #f8fafc; 
+      background: white; 
       color: #1e293b;
       cursor: pointer;
       box-sizing: border-box;
     }
 
-    @media (min-width: 992px) {
-      select {
-        max-width: 280px;
-      }
-    }
-
     .filter-chips { 
-      display: flex; 
-      flex-wrap: wrap;
-      gap: 0.75rem; 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem; 
+      width: 100%;
     }
     .chip { 
-      padding: 0 1rem; 
-      height: 42px;
-      border: 1px solid #e2e8f0; 
+      padding: 1.2rem; 
+      min-height: 80px;
+      border: 2px solid #e2e8f0; 
       background: white; 
-      border-radius: 10px; 
+      border-radius: 16px; 
       cursor: pointer; 
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: #475569;
       display: flex;
       align-items: center;
-      gap: 0.6rem;
-      transition: all 0.2s;
-      white-space: nowrap;
+      gap: 1rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
     }
-    .chip-icon { display: none; }
     .chip:hover {
-      background: #f1f5f9;
       border-color: #cbd5e1;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
     .chip.active { 
       background: #1e293b; 
       color: white; 
       border-color: #1e293b;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-      transform: translateY(-1px);
     }
+    
+    .chip-icon { 
+      font-size: 1.5rem;
+      background: #f8fafc;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+    }
+    .chip.active .chip-icon {
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .chip-label { 
+      flex-grow: 1;
+      text-align: left;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    
     .chip .count { 
-      background: #f1f5f9; 
-      color: #475569; 
-      padding: 1px 8px; 
-      border-radius: 6px; 
-      font-size: 0.75rem; 
-      font-weight: 800;
-      min-width: 20px;
+      background: #3b82f6; 
+      color: white; 
+      padding: 4px 12px; 
+      border-radius: 10px; 
+      font-size: 1.2rem; 
+      font-weight: 900;
+      min-width: 32px;
       text-align: center;
     }
     .chip.active .count { 
-      background: rgba(255,255,255,0.2); 
-      color: white; 
+      background: white; 
+      color: #1e293b; 
     }
 
     .alerts-section {
@@ -500,6 +558,8 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
     button { width: 100%; padding: 14px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; min-height: 48px; display: flex; align-items: center; justify-content: center; }
     .btn-start { background: #3498db; color: white; }
     .btn-finish { background: #2ecc71; color: white; }
+    .btn-cancel { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; margin-top: 4px; }
+    .btn-cancel:hover { background: #fecaca; }
     .btn-view-order { 
       background: none; 
       color: #7f8c8d; 
@@ -511,6 +571,7 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
     }
     .btn-view-order:hover { background: #f9f9f9; color: #2c3e50; border-color: #bdc3c7; }
     .badge-done { color: #27ae60; font-weight: bold; display: block; text-align: center; padding: 10px; }
+    .badge-cancelled { color: #dc2626; font-weight: bold; display: block; text-align: center; padding: 10px; text-transform: uppercase; background: #fee2e2; border-radius: 8px; }
 
     .loading-state, .empty-state { grid-column: 1 / -1; padding: 50px; text-align: center; background: white; border-radius: 12px; color: #666; }
 
@@ -540,18 +601,14 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap }
 
     @media (max-width: 480px) {
       .btn-today { width: 100%; margin-top: 4px; }
-      .filter-chips { gap: 0.4rem; justify-content: space-between; }
+      .filter-chips { grid-template-columns: 1fr; }
       .chip { 
-        padding: 0 0.4rem; 
-        height: 38px;
-        font-size: 0.8rem;
-        flex: 1;
-        justify-content: center;
-        gap: 0.3rem;
+        padding: 0.8rem; 
+        min-height: 60px;
       }
-      .chip-label { display: none; }
-      .chip-icon { display: block; font-size: 1.1rem; }
-      .chip .count { padding: 1px 4px; min-width: 16px; font-size: 0.7rem; }
+      .chip-label { display: block; font-size: 0.9rem; }
+      .chip-icon { font-size: 1.2rem; width: 32px; height: 32px; }
+      .chip .count { font-size: 1rem; min-width: 28px; }
     }
   `]
 })
@@ -566,12 +623,15 @@ export class PedidosObradorComponent implements OnInit {
   // Configuración de alertas
   upcomingThresholdHours = 4;
   showUpcomingList = true;
+  showFilters = false;
   
   // Filtros de estado
   activeStatuses: EstadoPedido[] = ['Pendiente', 'En Proceso'];
   
   familiaFilter = new FormControl('');
   fechaFilter = new FormControl(this.formatDate(new Date()));
+  timeSlotFilter = new FormControl('');
+  
   familias$: Observable<string[]>;
   filteredPedidos$!: Observable<Pedido[]>;
   upcomingPedidos$!: Observable<Pedido[]>;
@@ -585,26 +645,64 @@ export class PedidosObradorComponent implements OnInit {
 
   ngOnInit() {
     const pedidos$ = this.refresh$.pipe(
-      switchMap(() => this.productionService.getPedidos())
+      tap(() => {
+        // Usamos setTimeout para evitar el error ExpressionChangedAfterItHasBeenCheckedError
+        setTimeout(() => this.isRefreshing = true);
+      }),
+      switchMap(() => this.productionService.getPedidos().pipe(
+        finalize(() => {
+          setTimeout(() => this.isRefreshing = false);
+        })
+      )),
+      shareReplay(1)
     );
 
     const baseFiltered$ = combineLatest([
       pedidos$,
       this.familiaFilter.valueChanges.pipe(startWith(this.familiaFilter.value)),
       this.fechaFilter.valueChanges.pipe(startWith(this.fechaFilter.value)),
+      this.timeSlotFilter.valueChanges.pipe(startWith(this.timeSlotFilter.value)),
     ]).pipe(
-      map(([pedidos, familia, fecha]) => {
+      map(([pedidos, familia, fecha, timeSlot]) => {
         return pedidos
+          .filter(p => !p.guardadoEnTienda || p.estado === 'Entregado') // Incluimos entregados para las estadísticas de hoy
+          .filter(p => p.estado !== 'Cancelado') // Ocultar cancelados de producción
           .filter(p => !familia || p.producto.startsWith(familia) || this.belongsToFamilia(p, familia))
-          .filter(p => !fecha || this.formatDate(p.fechaEntrega) === fecha);
-      })
+          .filter(p => !fecha || this.formatDate(p.fechaEntrega) === fecha)
+          .filter(p => {
+            if (!timeSlot) return true;
+            const hour = new Date(p.fechaEntrega).getHours();
+            const minutes = new Date(p.fechaEntrega).getMinutes();
+            const totalMinutes = hour * 60 + minutes;
+
+            switch (timeSlot) {
+              case 'mañana-primera': return totalMinutes < (9 * 60 + 30); // Antes de 9:30
+              case 'mañana-media': return totalMinutes >= (9 * 60 + 30) && totalMinutes < 12 * 60;
+              case 'mediodia': return totalMinutes >= 12 * 60 && totalMinutes < 15 * 60;
+              case 'tarde-primera': return totalMinutes >= 15 * 60 && totalMinutes < (18 * 60 + 30);
+              case 'tarde-ultima': return totalMinutes >= (18 * 60 + 30);
+              default: return true;
+            }
+          });
+      }),
+      shareReplay(1)
     );
 
     this.filteredPedidos$ = baseFiltered$.pipe(
       map(pedidos => {
         return pedidos
-          .filter(p => this.activeStatuses.length === 0 || this.activeStatuses.includes(p.estado))
-          .sort((a, b) => new Date(a.fechaEntrega).getTime() - new Date(b.fechaEntrega).getTime());
+          .filter(p => {
+            if (this.activeStatuses.length === 0) return true;
+            if (this.activeStatuses.includes(p.estado)) return true;
+            // Si el operario quiere ver terminados, incluimos también entregados
+            if (this.activeStatuses.includes('Terminado') && p.estado === 'Entregado') return true;
+            return false;
+          })
+          .sort((a, b) => {
+            const dateA = new Date(a.fechaEntrega).getTime();
+            const dateB = new Date(b.fechaEntrega).getTime();
+            return dateA - dateB;
+          });
       })
     );
 
@@ -613,6 +711,7 @@ export class PedidosObradorComponent implements OnInit {
         const now = new Date();
         const limit = new Date(now.getTime() + (this.upcomingThresholdHours * 60 * 60 * 1000));
         return pedidos
+          .filter(p => !p.guardadoEnTienda) // Ocultar lo que ya está en tienda
           .filter(p => p.estado === 'Pendiente')
           .filter(p => {
             const f = new Date(p.fechaEntrega);
@@ -626,7 +725,7 @@ export class PedidosObradorComponent implements OnInit {
       map(pedidos => ({
         falta: pedidos.filter(p => p.estado === 'Pendiente').length,
         enCurso: pedidos.filter(p => p.estado === 'En Proceso').length,
-        terminado: pedidos.filter(p => p.estado === 'Producido').length
+        terminado: pedidos.filter(p => p.estado === 'Terminado' || p.estado === 'Entregado').length
       }))
     );
 

@@ -18,11 +18,13 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<boolean> {
-    // Mock login logic
+    // Mock login logic con perfiles solicitados
     const mockUsers: any[] = [
-      { email: 'admin@arruti.eus', password: 'admin', nombre: 'Administrador', perfilId: 'admin' },
-      { email: 'joxe@arruti.eus', password: 'AupaErreala', nombre: 'Joxe', perfilId: 'obrador' },
-      { email: 'sonia@arruti.eus', password: 'IratiArruti', nombre: 'Sonia', perfilId: 'tienda' }
+      { email: 'admin@arruti.eus', password: 'Aitor12345', nombre: 'Admin', perfilId: 'admin' },
+      { email: 'joxe@arruti.eus', password: 'Joxe12345', nombre: 'Joxe', perfilId: 'obrador-repo' },
+      { email: 'sonia@arruti.eus', password: 'Sonia12345', nombre: 'Sonia', perfilId: 'tienda-repo' },
+      { email: 'amatza@arruti.eus', password: 'Amatza12345', nombre: 'Amatza', perfilId: 'tienda-emp' },
+      { email: 'aitor@arruti.eus', password: 'Aitor', nombre: 'Aitor', perfilId: 'obrador-emp' }
     ];
 
     const found = mockUsers.find(u => u.email === email && u.password === password);
@@ -40,6 +42,34 @@ export class AuthService {
       return of(true);
     }
     return of(false);
+  }
+
+  getDefaultRoute(perfilId: string): string {
+    switch (perfilId) {
+      case 'obrador-repo':
+      case 'obrador-emp':
+        return '/obrador';
+      case 'tienda-repo':
+      case 'tienda-emp':
+        return '/pedidos'; // Tienda
+      case 'admin':
+        return '/pedidos'; 
+      default:
+        return '/pedidos';
+    }
+  }
+
+  hasPermission(perfilId: string, menuOption: string): boolean {
+    const permissions: Record<string, string[]> = {
+      'admin': ['tienda', 'obrador', 'catalogo', 'seguridad'],
+      'obrador-repo': ['tienda', 'obrador', 'catalogo'],
+      'tienda-repo': ['tienda', 'catalogo'],
+      'tienda-emp': ['tienda'],
+      'obrador-emp': ['obrador']
+    };
+
+    const userPerms = permissions[perfilId] || [];
+    return userPerms.includes(menuOption);
   }
 
   logout() {

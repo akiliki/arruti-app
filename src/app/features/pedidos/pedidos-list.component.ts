@@ -22,54 +22,6 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
         </button>
       </div>
 
-      <div class="stats-grid" *ngIf="stats$ | async as stats">
-        <div class="stat-card pending">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-              <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{stats.pendientesEntrega}}</span>
-            <span class="stat-label">Pendientes</span>
-          </div>
-        </div>
-        <div class="stat-card urgent">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-              <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7v-5z"/>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{stats.hoy}}</span>
-            <span class="stat-label">Para Hoy</span>
-          </div>
-        </div>
-        <div class="stat-card manufacturing">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-              <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
-              <path d="M12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{stats.enObrador}}</span>
-            <span class="stat-label">En Obrador</span>
-          </div>
-        </div>
-        <div class="stat-card delivered">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.47 10 10 10 10-4.47 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{stats.entregados}}</span>
-            <span class="stat-label">Entregados</span>
-          </div>
-        </div>
-      </div>
-
       <div class="filters-bar">
         <div class="filter-group">
           <label>Estado</label>
@@ -77,8 +29,9 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
             <option value="">Todos</option>
             <option value="Pendiente">Pendiente</option>
             <option value="En Proceso">En Proceso</option>
-            <option value="Producido">Producido</option>
+            <option value="Terminado">Terminado</option>
             <option value="Entregado">Entregado</option>
+            <option value="Cancelado">Cancelado</option>
           </select>
         </div>
         <div class="filter-group">
@@ -130,6 +83,7 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
                       {{ pedido.producto }}
                       <span *ngIf="pedido.talla" class="talla-badge">{{ pedido.talla }}</span>
                       <span *ngIf="pedido.relleno" class="relleno-tag">{{ pedido.relleno }}</span>
+                      <span *ngIf="pedido.guardadoEnTienda" class="already-in-shop-chip">Tienda</span>
                     </td>
                     <td class="qty-cell">{{ pedido.cantidad }}</td>
                     <td class="date-cell">
@@ -158,7 +112,7 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
                         <button class="btn-icon edit" [routerLink]="['/pedidos/editar', pedido.id]" title="Editar">
                           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                         </button>
-                        <button *ngIf="pedido.estado === 'Producido'" 
+                        <button *ngIf="pedido.estado === 'Terminado' || pedido.guardadoEnTienda" 
                                 class="btn-icon deliver" 
                                 (click)="markAsDelivered(pedido.id)"
                                 [disabled]="updatingId === pedido.id"
@@ -195,6 +149,7 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
                     <span class="product">
                       {{ pedido.producto }}
                       <span *ngIf="pedido.relleno" class="relleno-tag">{{ pedido.relleno }}</span>
+                      <span *ngIf="pedido.guardadoEnTienda" class="already-in-shop-chip">Tienda</span>
                     </span>
                   </div>
                   <div class="vendedor-info" *ngIf="pedido.vendedor">
@@ -214,7 +169,10 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
                   <button class="btn-mobile-secondary" [routerLink]="['/pedidos', pedido.id]">
                     VER DETALLE
                   </button>
-                  <button *ngIf="pedido.estado === 'Producido'" 
+                  <button class="btn-mobile-secondary" [routerLink]="['/pedidos/editar', pedido.id]">
+                    EDITAR
+                  </button>
+                  <button *ngIf="pedido.estado === 'Terminado' || pedido.guardadoEnTienda" 
                           class="btn-mobile-primary"
                           (click)="markAsDelivered(pedido.id)"
                           [disabled]="updatingId === pedido.id">
@@ -294,54 +252,6 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
     }
     .btn-new:active { transform: scale(0.98); }
     .btn-new:hover { background: #ba4a00; }
-
-    /* Stats Grid */
-    .stats-grid {
-      display: none;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    .stat-card {
-      background: white;
-      padding: 1.25rem;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      border: 1px solid var(--gray-border);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    }
-
-    .stat-icon {
-      padding: 0.75rem;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .pending .stat-icon { background: #fff3e0; color: #ff9800; }
-    .urgent .stat-icon { background: #ffebee; color: #f44336; }
-    .manufacturing .stat-icon { background: #e3f2fd; color: #2196f3; }
-    .delivered .stat-icon { background: #e8f5e9; color: #4caf50; }
-
-    .stat-value {
-      display: block;
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--primary);
-      line-height: 1;
-    }
-
-    .stat-label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
 
     /* Filters Bar */
     .filters-bar {
@@ -458,6 +368,18 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
       text-transform: uppercase;
     }
 
+    .already-in-shop-chip {
+      background: #dcfce7;
+      color: #166534;
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 800;
+      margin-left: 8px;
+      border: 1px solid #bbf7d0;
+      text-transform: uppercase;
+    }
+
     .vendedor-badge {
       display: inline-flex;
       align-items: center;
@@ -499,8 +421,9 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
 
     .status-badge[data-status="pendiente"] { background: #fef9c3; color: #854d0e; }
     .status-badge[data-status="en-proceso"] { background: #dbeafe; color: #1e40af; }
-    .status-badge[data-status="producido"] { background: #dcfce7; color: #166534; }
+    .status-badge[data-status="producido"], .status-badge[data-status="terminado"] { background: #dcfce7; color: #166534; }
     .status-badge[data-status="entregado"] { background: #f3f4f6; color: #374151; }
+    .status-badge[data-status="cancelado"] { background: #fee2e2; color: #991b1b; }
 
     .actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
     
@@ -581,10 +504,6 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
       .desktop-table { display: block; }
       .mobile-grid { display: none; }
       .page-container { padding: 2rem; }
-      .stats-grid { 
-        display: grid;
-        grid-template-columns: repeat(4, 1fr); 
-      }
     }
 
     /* States */
@@ -620,20 +539,10 @@ export class PedidosListComponent implements OnInit {
   private refresh$ = new BehaviorSubject<void>(undefined);
   updatingId: string | null = null;
   filteredPedidos$!: Observable<Pedido[]>;
-  stats$!: Observable<{ pendientesEntrega: number, hoy: number, enObrador: number, entregados: number }>;
 
   ngOnInit() {
     // Escuchamos el flujo continuo de pedidos del servicio
     const rawPedidos$ = this.productionService.getPedidos();
-    
-    this.stats$ = rawPedidos$.pipe(
-      map(pedidos => ({
-        pendientesEntrega: pedidos.filter(p => p.estado !== 'Entregado').length,
-        hoy: pedidos.filter(p => this.isToday(p.fechaEntrega)).length,
-        enObrador: pedidos.filter(p => p.estado === 'Pendiente' || p.estado === 'En Proceso').length,
-        entregados: pedidos.filter(p => p.estado === 'Entregado' && this.isToday(p.fechaActualizacion || new Date())).length
-      }))
-    );
 
     const estado$ = this.estadoFilter.valueChanges.pipe(startWith(this.estadoFilter.value));
     const producto$ = this.productoFilter.valueChanges.pipe(startWith(this.productoFilter.value));
@@ -642,27 +551,53 @@ export class PedidosListComponent implements OnInit {
 
     this.filteredPedidos$ = combineLatest([rawPedidos$, estado$, producto$, fecha$, nombre$]).pipe(
       map(([pedidos, estado, producto, fecha, nombre]) => {
-        return pedidos
+        const filtered = pedidos
           .filter(p => {
             let matchEstado = true;
             if (estado === 'Pendiente') {
-              matchEstado = p.estado !== 'Entregado';
+              matchEstado = p.estado !== 'Entregado' && p.estado !== 'Cancelado';
             } else if (estado) {
               matchEstado = p.estado === estado;
             } else {
-              matchEstado = p.estado !== 'Entregado'; // Default: no entregados
+              matchEstado = p.estado !== 'Entregado' && p.estado !== 'Cancelado'; // Default: activos
             }
 
             const matchProducto = !producto || p.producto.toLowerCase().includes(producto.toLowerCase());
             const matchFecha = !fecha || this.formatDate(p.fechaEntrega) === fecha;
             const matchNombre = !nombre || (p.nombreCliente && p.nombreCliente.toLowerCase().includes(nombre.toLowerCase()));
             return matchEstado && matchProducto && matchFecha && matchNombre;
-          })
-          .sort((a, b) => {
-            const dateA = new Date(a.fechaEntrega).getTime();
-            const dateB = new Date(b.fechaEntrega).getTime();
-            return dateA - dateB;
           });
+
+        // Agrupar por idGrupo
+        const groups = new Map<string, Pedido[]>();
+        filtered.forEach(p => {
+          const key = p.idGrupo || p.id;
+          if (!groups.has(key)) {
+            groups.set(key, []);
+          }
+          groups.get(key)!.push(p);
+        });
+
+        const result: Pedido[] = [];
+        groups.forEach((items) => {
+          if (items.length === 1) {
+            result.push(items[0]);
+          } else {
+            const base = items[0];
+            const extraCount = items.length - 1;
+            result.push({
+              ...base,
+              producto: `${base.producto} + ${extraCount} más`,
+              // El estado del grupo será el del primero, o podrías calcular el "mínimo"
+            });
+          }
+        });
+
+        return result.sort((a, b) => {
+          const dateA = new Date(a.fechaEntrega).getTime();
+          const dateB = new Date(b.fechaEntrega).getTime();
+          return dateA - dateB;
+        });
       })
     );
   }
@@ -678,7 +613,7 @@ export class PedidosListComponent implements OnInit {
 
   markAsReady(id: string) {
     this.updatingId = id;
-    this.productionService.updatePedidoStatus(id, 'Producido').subscribe({
+    this.productionService.updatePedidoStatus(id, 'Terminado').subscribe({
       next: () => {
         this.updatingId = null;
         // No hace falta refresh$ porque el servicio ya es reactivo y optimista
