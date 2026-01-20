@@ -3,4 +3,5 @@ export interface Producto {
   familia: string;
   producto: string;
   tallasRaciones: string[];
+  rellenos: string[];
 }

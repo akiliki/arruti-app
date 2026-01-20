@@ -70,7 +70,22 @@ Como gestor, quiero crear pedidos seleccionando productos del catálogo de forma
 * La interfaz debe ser utilizable sin teclado/ratón (target táctil > 44px).
 * Feedback visual inmediato tras la creación.
 * Persistencia en Google Sheets.
+### CU-06: Gestión de Familias de Productos
+**Estado:** Definido
+**Criticidad:** BAJA
 
+**Descripción:**
+Como administrador, quiero poder reutilizar familias de productos existentes al crear nuevos artículos para mantener la consistencia del catálogo, permitiendo también la creación de nuevas familias de forma dinámica.
+
+**Flujo Principal:**
+1. El usuario accede al formulario de Producto (Nuevo o Editar).
+2. Al situarse en el campo "Familia", el sistema sugiere las familias ya existentes.
+3. El usuario puede seleccionar una de la lista o escribir una nueva.
+4. Al guardar el producto, la nueva familia queda registrada y disponible para futuros productos.
+
+**Criterios de Aceptación:**
+- El sistema debe ofrecer autocompletado basado en los datos actuales.
+- No se requiere una pantalla de gestión de familias por separado (se gestionan dinámicamente).
 ### CU-04: Modificación de Pedidos
 **Estado:** Definido
 **Criticidad:** ALTA

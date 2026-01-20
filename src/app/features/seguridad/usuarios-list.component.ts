@@ -37,6 +37,7 @@ import { Usuario } from '../../core/models/usuario.model';
 export class UsuariosListComponent {
   usuarios: Usuario[] = [
     { id: '1', nombre: 'Admin', email: 'admin@arruti.com', perfilId: 'admin', activo: true },
-    { id: '2', nombre: 'Obrador 1', email: 'obrador1@arruti.com', perfilId: 'obrador', activo: true }
+    { id: '2', nombre: 'Joxe', email: 'joxe@arruti.eus', perfilId: 'obrador', activo: true },
+    { id: '3', nombre: 'Sonia', email: 'sonia@arruti.eus', perfilId: 'tienda', activo: true }
   ];
 }

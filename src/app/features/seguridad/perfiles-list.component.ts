@@ -35,6 +35,7 @@ import { Perfil } from '../../core/models/perfil.model';
 export class PerfilesListComponent {
   perfiles: Perfil[] = [
     { id: 'admin', nombre: 'Administrador', descripcion: 'Acceso total', permisos: ['*'] },
-    { id: 'obrador', nombre: 'Obrador', descripcion: 'Gestión de producción', permisos: ['pedidos.view', 'pedidos.update'] }
+    { id: 'obrador', nombre: 'Obrador', descripcion: 'Gestión de producción', permisos: ['pedidos.view', 'pedidos.update'] },
+    { id: 'tienda', nombre: 'Tienda', descripcion: 'Gestión de pedidos en tienda', permisos: ['pedidos.create', 'pedidos.update'] }
   ];
 }

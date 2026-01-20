@@ -35,6 +35,7 @@ El sistema utiliza Google Sheets como base de datos centralizada.
 | Familia | String | Categoría (Bollos, Pasteles, etc.) |
 | Nombre | String | Nombre comercial |
 | Raciones_Tallas | String | Lista separada por comas |
+| Rellenos | String | Lista separada por comas |
 
 #### Hoja: `Usuarios` (Planificado)
 | Columna | Tipo | Descripción |

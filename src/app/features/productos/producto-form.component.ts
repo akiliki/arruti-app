@@ -19,7 +19,21 @@ import { Producto } from '../../core/models/producto.model';
       <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="card">
         <div class="field">
           <label>Familia</label>
-          <input type="text" formControlName="familia" placeholder="Ej: Bollería, Pastelería, Panes...">
+          <div class="family-selector">
+            <ng-container *ngIf="!isNewFamily; else newFamilyInput">
+              <select formControlName="familia" (change)="onFamilyChange($event)">
+                <option value="" disabled selected>Seleccione una familia...</option>
+                <option *ngFor="let f of familias()" [value]="f">{{f}}</option>
+                <option value="NEW_FAMILY">+ Crear nueva familia...</option>
+              </select>
+            </ng-container>
+            <ng-template #newFamilyInput>
+              <div class="input-with-action">
+                <input type="text" formControlName="familia" placeholder="Nombre de la nueva familia...">
+                <button type="button" (click)="cancelNewFamily()" class="btn-link">Ver lista</button>
+              </div>
+            </ng-template>
+          </div>
           <div *ngIf="productForm.get('familia')?.touched && productForm.get('familia')?.invalid" class="error">
             La familia es obligatoria.
           </div>
@@ -36,6 +50,12 @@ import { Producto } from '../../core/models/producto.model';
         <div class="field">
           <label>Raciones / Tamaños (opcional)</label>
           <input type="text" formControlName="tallasRaciones" placeholder="Ej: Individual, 4p, 6p (separados por comas)">
+          <small>Si hay varios, sepárelos por comas.</small>
+        </div>
+
+        <div class="field">
+          <label>Rellenos (opcional)</label>
+          <input type="text" formControlName="rellenos" placeholder="Ej: Crema, Chocolate, Nata, Sin Relleno...">
           <small>Si hay varios, sepárelos por comas.</small>
         </div>
 
@@ -57,8 +77,13 @@ import { Producto } from '../../core/models/producto.model';
     .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     .field { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
     .field label { font-weight: 600; color: #444; }
-    .field input { padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; }
+    .field input, .field select { padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; }
     .field small { color: #888; font-size: 0.8rem; }
+
+    .input-with-action { display: flex; gap: 0.5rem; align-items: center; }
+    .input-with-action input { flex: 1; }
+    .btn-link { background: none; border: none; color: #2196f3; cursor: pointer; font-size: 0.9rem; padding: 0.5rem; }
+    .btn-link:hover { text-decoration: underline; }
     
     .error { color: #d32f2f; font-size: 0.8rem; }
     .error-box { margin-top: 1rem; padding: 1rem; background: #ffebee; color: #c62828; border-radius: 4px; }
@@ -75,16 +100,31 @@ export class ProductoFormComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
+  familias = this.productoService.familiasSignal;
   isSubmitting = false;
   isEditMode = false;
+  isNewFamily = false;
   productId: string | null = null;
   errorMessage = '';
 
   productForm = this.fb.group({
     familia: ['', Validators.required],
     producto: ['', Validators.required],
-    tallasRaciones: ['']
+    tallasRaciones: [''],
+    rellenos: ['']
   });
+
+  onFamilyChange(event: any) {
+    if (event.target.value === 'NEW_FAMILY') {
+      this.isNewFamily = true;
+      this.productForm.get('familia')?.setValue('');
+    }
+  }
+
+  cancelNewFamily() {
+    this.isNewFamily = false;
+    this.productForm.get('familia')?.setValue('');
+  }
 
   ngOnInit() {
     this.productId = this.route.snapshot.paramMap.get('id');
@@ -100,7 +140,8 @@ export class ProductoFormComponent implements OnInit {
         this.productForm.patchValue({
           familia: producto.familia,
           producto: producto.producto,
-          tallasRaciones: producto.tallasRaciones.join(', ')
+          tallasRaciones: producto.tallasRaciones.join(', '),
+          rellenos: (producto.rellenos || []).join(', ')
         });
       } else {
         this.errorMessage = 'Producto no encontrado.';
@@ -118,13 +159,17 @@ export class ProductoFormComponent implements OnInit {
     const tallas = formValue.tallasRaciones 
       ? formValue.tallasRaciones.split(',').map(s => s.trim()).filter(s => s !== '')
       : [];
+    const rellenosList = formValue.rellenos
+      ? formValue.rellenos.split(',').map(s => s.trim()).filter(s => s !== '')
+      : [];
 
     if (this.isEditMode && this.productId) {
       const productoActualizado: Producto = {
         id: this.productId,
         familia: formValue.familia || '',
         producto: formValue.producto || '',
-        tallasRaciones: tallas
+        tallasRaciones: tallas,
+        rellenos: rellenosList
       };
 
       this.productoService.updateProducto(productoActualizado).subscribe({
@@ -138,7 +183,8 @@ export class ProductoFormComponent implements OnInit {
       const nuevoProducto = {
         familia: formValue.familia || '',
         producto: formValue.producto || '',
-        tallasRaciones: tallas
+        tallasRaciones: tallas,
+        rellenos: rellenosList
       };
 
       this.productoService.addProducto(nuevoProducto).subscribe({

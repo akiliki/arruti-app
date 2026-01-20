@@ -30,6 +30,7 @@ interface ProductApiResponse {
     familia: string;
     nombre: string;
     raciones_tallas: string | number; // Can be string or number from Sheets
+    rellenos: string;
   }>;
 }
 
@@ -75,7 +76,8 @@ export class GoogleSheetsAdapter {
         id: item.id_producto,
         familia: item.familia || 'Sin Familia',
         producto: item.nombre || 'Sin nombre',
-        tallasRaciones: tallas
+        tallasRaciones: tallas,
+        rellenos: item.rellenos ? item.rellenos.split(/[,/;|]+/).map(s => s.trim()).filter(s => s !== '') : []
       };
     });
   }
@@ -88,7 +90,8 @@ export class GoogleSheetsAdapter {
       id_producto: producto.id,
       familia: producto.familia,
       nombre: producto.producto,
-      raciones_tallas: producto.tallasRaciones.join(', ')
+      raciones_tallas: producto.tallasRaciones.join(', '),
+      rellenos: producto.rellenos.join(', ')
     };
   }
 

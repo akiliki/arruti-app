@@ -23,6 +23,12 @@ export class ProductoService {
     this.productosState.subscribe(p => this.productosSignal.set(p));
   }
 
+  // Selector para obtener familias únicas
+  public familiasSignal = computed(() => {
+    const familias = this.productosSignal().map(p => p.familia);
+    return [...new Set(familias)].sort();
+  });
+
   getProductos(): Observable<Producto[]> {
     if (!this.loaded) {
       this.refreshProductos().subscribe();

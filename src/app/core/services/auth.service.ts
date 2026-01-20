@@ -19,12 +19,20 @@ export class AuthService {
 
   login(email: string, password: string): Observable<boolean> {
     // Mock login logic
-    if (email === 'admin@arruti.com' && password === 'admin') {
+    const mockUsers: any[] = [
+      { email: 'admin@arruti.com', password: 'admin', nombre: 'Administrador', perfilId: 'admin' },
+      { email: 'joxe@arruti.eus', password: 'AupaErreala', nombre: 'Joxe', perfilId: 'obrador' },
+      { email: 'sonia@arruti.eus', password: 'IratiArruti', nombre: 'Sonia', perfilId: 'tienda' }
+    ];
+
+    const found = mockUsers.find(u => u.email === email && u.password === password);
+    
+    if (found) {
       const user: Usuario = {
-        id: '1',
-        nombre: 'Administrador',
-        email: email,
-        perfilId: 'admin',
+        id: Math.random().toString(36).substr(2, 9),
+        nombre: found.nombre,
+        email: found.email,
+        perfilId: found.perfilId,
         activo: true
       };
       localStorage.setItem('user', JSON.stringify(user));

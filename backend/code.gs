@@ -105,6 +105,14 @@ function doPost(e) {
       return handleAddProducto(sheetProductos, payload);
     }
 
+    if (payload.action === 'updateProduct') {
+      const sheetProductos = ss.getSheetByName('Productos');
+      if (!sheetProductos) {
+        throw new Error("La hoja 'Productos' no existe.");
+      }
+      return handleUpdateProducto(sheetProductos, payload);
+    }
+
     const sheetPedidos = ss.getSheetByName('Pedidos');
     if (!sheetPedidos) {
       throw new Error("La hoja 'Pedidos' no existe.");
@@ -112,6 +120,10 @@ function doPost(e) {
 
     if (payload.action === 'updateStatus') {
       return handleUpdateStatus(sheetPedidos, payload);
+    }
+
+    if (payload.action === 'updateOrder') {
+      return handleUpdateOrder(sheetPedidos, payload);
     }
 
     // Acción por defecto: Añadir pedido
@@ -187,7 +199,34 @@ function handleUpdateStatus(sheet, payload) {
   throw new Error("Pedido no encontrado para actualizar.");
 }
 
-
+/**
+ * Actualiza un pedido completo
+ */
+function handleUpdateOrder(sheet, payload) {
+  const data = sheet.getDataRange().getValues();
+  const idToUpdate = payload.id;
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === idToUpdate) {
+      const row = i + 1;
+      sheet.getRange(row, 2).setValue(payload.producto);
+      sheet.getRange(row, 3).setValue(payload.cantidad);
+      sheet.getRange(row, 4).setValue(payload.fechaEntrega);
+      sheet.getRange(row, 5).setValue(payload.estado);
+      sheet.getRange(row, 6).setValue(new Date()); // Fecha Actualización
+      sheet.getRange(row, 7).setValue(payload.nombre_cliente);
+      sheet.getRange(row, 8).setValue(payload.notas_pastelero);
+      sheet.getRange(row, 9).setValue(payload.notas_tienda);
+      
+      return createResponse({
+        status: "success",
+        message: "Pedido actualizado correctamente"
+      });
+    }
+  }
+  
+  throw new Error("Pedido no encontrado para actualizar.");
+}
 
 /**
  * Obtiene la lista de productos
@@ -208,7 +247,8 @@ function handleGetProductos(ss) {
     id_producto: row[0],
     familia: row[1],
     nombre: row[2],
-    raciones_tallas: row[3]
+    raciones_tallas: row[3],
+    rellenos: row[4]
   }));
 
   return createResponse({
@@ -225,7 +265,8 @@ function handleAddProducto(sheet, payload) {
     payload.id_producto,
     payload.familia,
     payload.nombre,
-    payload.raciones_tallas
+    payload.raciones_tallas,
+    payload.rellenos
   ];
 
   sheet.appendRow(newRow);
@@ -236,6 +277,32 @@ function handleAddProducto(sheet, payload) {
     id: payload.id_producto
   });
 }
+
+/**
+ * Actualiza un producto existente
+ */
+function handleUpdateProducto(sheet, payload) {
+  const data = sheet.getDataRange().getValues();
+  const idToUpdate = payload.id_producto;
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === idToUpdate) {
+      const row = i + 1;
+      sheet.getRange(row, 2).setValue(payload.familia);
+      sheet.getRange(row, 3).setValue(payload.nombre);
+      sheet.getRange(row, 4).setValue(payload.raciones_tallas);
+      sheet.getRange(row, 5).setValue(payload.rellenos);
+      
+      return createResponse({
+        status: "success",
+        message: "Producto actualizado correctamente"
+      });
+    }
+  }
+  
+  throw new Error("Producto no encontrado para actualizar.");
+}
+
 /**
  * Función para probar y autorizar permisos
  */

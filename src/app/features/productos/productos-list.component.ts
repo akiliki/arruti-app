@@ -39,6 +39,7 @@ import { Observable, combineLatest, map, startWith } from 'rxjs';
               <th>Familia</th>
               <th>Producto</th>
               <th>Raciones/Tallas</th>
+              <th>Rellenos</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -47,6 +48,7 @@ import { Observable, combineLatest, map, startWith } from 'rxjs';
               <td><span class="badge">{{p.familia}}</span></td>
               <td><strong>{{p.producto}}</strong></td>
               <td>{{p.tallasRaciones.join(', ') || '-'}}</td>
+              <td>{{p.rellenos?.join(', ') || '-'}}</td>
               <td class="actions-cell">
                 <button class="btn-detail" [routerLink]="['/productos', p.id]">
                   Ver
@@ -171,10 +173,12 @@ import { Observable, combineLatest, map, startWith } from 'rxjs';
       
       td:first-child { margin-bottom: 0.5rem; }
       td:nth-child(2) { font-size: 1.2rem; margin-bottom: 0.25rem; }
-      td:nth-child(3) { color: #64748b; font-size: 0.9rem; margin-bottom: 1rem; }
+      td:nth-child(3) { color: #64748b; font-size: 0.9rem; margin-bottom: 0.25rem; }
+      td:nth-child(4) { color: #64748b; font-size: 0.9rem; margin-bottom: 1rem; }
       
       /* Add labels for mobile */
       td:nth-child(3)::before { content: 'Tallas: '; font-weight: 700; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; }
+      td:nth-child(4)::before { content: 'Rellenos: '; font-weight: 700; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; }
       
       .actions-cell {
         margin-top: 1rem;
