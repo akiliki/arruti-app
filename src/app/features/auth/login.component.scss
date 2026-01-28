@@ -22,6 +22,7 @@ input {
   border: 1px solid #ccc;
   border-radius: 4px;
   box-sizing: border-box;
+  min-height: 44px;
 }
 button {
   width: 100%;
@@ -32,7 +33,13 @@ button {
   border-radius: 4px;
   cursor: pointer;
   font-size: 1rem;
+  min-height: 44px;
 }
 button:disabled { background-color: #ccc; }
+.login-container input:focus-visible,
+.login-container button:focus-visible {
+  outline: 2px solid #3f51b5;
+  outline-offset: 2px;
+}
 .error { color: red; font-size: 0.8rem; margin-top: 0.25rem; }
 .error-message { color: red; margin-bottom: 1rem; text-align: center; }

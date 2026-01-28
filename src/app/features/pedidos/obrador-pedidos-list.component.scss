@@ -58,6 +58,9 @@
 }
 .dot { width: 8px; height: 8px; background: #cbd5e1; border-radius: 50%; }
 .dot.active { background: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); animation: pulse 2s infinite; }
+.dot.red { background: #ef4444; }
+.dot.blue { background: #3b82f6; }
+.dot.green { background: #22c55e; }
 @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.6; } 100% { transform: scale(1); opacity: 1; } }
 
 .quick-filters {
@@ -196,8 +199,6 @@
 }
 
 .extra-filters {
-  margin-top: 15px;
-  padding-top: 15px;
   border-top: 1px dashed #e2e8f0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -256,10 +257,7 @@
   box-shadow: 0 0 0 1px #3b82f6;
 }
 
-.dot { width: 8px; height: 8px; border-radius: 50%; }
-.dot.red { background: #ef4444; }
-.dot.blue { background: #3b82f6; }
-.dot.green { background: #22c55e; }
+
 
 .status-summary-bar {
   margin-bottom: 25px;
@@ -479,6 +477,7 @@
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   color: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  min-height: 44px;
 }
 .btn-mini-action.start { 
   background: #3b82f6;
@@ -538,6 +537,14 @@
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+}
+.btn-t-action:disabled,
+.btn-action:disabled,
+.btn-mini-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-undo { 
@@ -791,7 +798,7 @@
   padding: 6px 12px;
   font-size: 0.75rem;
   border-radius: 6px;
-  min-height: 32px;
+  min-height: 44px;
   width: auto;
 }
 .btn-action.start { background: #3498db; color: white; }
@@ -818,7 +825,6 @@
 /* Estilos Responsivos */
 @media (max-width: 992px) {
   .td-total { font-size: 1.8rem; width: 80px; }
-  .talla-notes { min-width: 350px; }
 }
 
 @media (max-width: 768px) {
@@ -960,11 +966,6 @@
   .d-p-time { font-size: 0.95rem; }
   .d-p-client { font-size: 0.9rem; }
   
-  .talla-notes {
-    min-width: 100%;
-    margin-top: 10px;
-    padding: 10px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -974,6 +975,4 @@
   
   .btn-more-filters { width: 100%; height: 40px; border-radius: 8px; margin-top: 5px; }
   
-  .chip-label { display: block; font-size: 0.9rem; }
-  .chip-icon { font-size: 1.2rem; width: 32px; height: 32px; }
 }

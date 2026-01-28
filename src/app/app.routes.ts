@@ -17,23 +17,23 @@ export const routes: Routes = [
       },
       {
         path: 'pedidos',
-        loadComponent: () => import('./features/pedidos/pedidos-list.component').then(m => m.PedidosListComponent)
+        loadComponent: () => import('./features/pedidos/tienda-pedidos-list.component').then(m => m.TiendaPedidosListComponent)
       },
       {
         path: 'obrador',
-        loadComponent: () => import('./features/pedidos/pedidos-obrador.component').then(m => m.PedidosObradorComponent)
+        loadComponent: () => import('./features/pedidos/obrador-pedidos-list.component').then(m => m.ObradorPedidosListComponent)
       },
       {
         path: 'nuevo-pedido',
-        loadComponent: () => import('./features/pedidos/pedido-form.component').then(m => m.PedidoFormComponent)
+        loadComponent: () => import('./features/pedidos/tienda-pedido-form.component').then(m => m.TiendaPedidoFormComponent)
       },
       {
         path: 'pedidos/editar/:id',
-        loadComponent: () => import('./features/pedidos/pedido-form.component').then(m => m.PedidoFormComponent)
+        loadComponent: () => import('./features/pedidos/tienda-pedido-form.component').then(m => m.TiendaPedidoFormComponent)
       },
       {
         path: 'pedidos/:id/estado',
-        loadComponent: () => import('./features/pedidos/update-status.component').then(m => m.UpdateStatusComponent)
+        loadComponent: () => import('./features/pedidos/tienda-update-status.component').then(m => m.TiendaUpdateStatusComponent)
       },
       {
         path: 'productos',
@@ -53,11 +53,11 @@ export const routes: Routes = [
       },
       {
         path: 'pedidos/:id',
-        loadComponent: () => import('./features/pedidos/pedido-tienda-detail.component').then(m => m.PedidoTiendaDetailComponent)
+        loadComponent: () => import('./features/pedidos/tienda-pedido-detail.component').then(m => m.TiendaPedidoDetailComponent)
       },
       {
         path: 'obrador/pedidos/:id',
-        loadComponent: () => import('./features/pedidos/pedido-obrador-detail.component').then(m => m.PedidoObradorDetailComponent)
+        loadComponent: () => import('./features/pedidos/obrador-pedido-detail.component').then(m => m.ObradorPedidoDetailComponent)
       },
       {
         path: 'seguridad',

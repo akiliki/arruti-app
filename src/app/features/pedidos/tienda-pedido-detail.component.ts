@@ -6,7 +6,7 @@ import { Pedido } from '../../core/models/pedido.model';
 import { Observable, map, switchMap, BehaviorSubject, of, forkJoin } from 'rxjs';
 
 @Component({
-  selector: 'app-pedido-tienda-detail',
+  selector: 'app-tienda-pedido-detail',
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
@@ -118,9 +118,9 @@ import { Observable, map, switchMap, BehaviorSubject, of, forkJoin } from 'rxjs'
       </ng-template>
     </div>
   `,
-  styleUrl: './pedido-tienda-detail.component.scss'
+  styleUrl: './tienda-pedido-detail.component.scss'
 })
-export class PedidoTiendaDetailComponent implements OnInit {
+export class TiendaPedidoDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private productionService = inject(ProductionService);

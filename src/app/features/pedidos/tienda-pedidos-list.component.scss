@@ -24,6 +24,8 @@
   margin-bottom: 1.5rem;
 }
 
+.text-right { text-align: right; }
+
 h1 {
   margin: 0;
   font-size: 1.75rem;
@@ -44,6 +46,7 @@ h1 {
   gap: 0.5rem;
   transition: transform 0.1s, background 0.2s;
   box-shadow: 0 4px 6px rgba(211, 84, 0, 0.2);
+  min-height: 44px;
 }
 .btn-new:active { transform: scale(0.98); }
 .btn-new:hover { background: #ba4a00; }
@@ -122,6 +125,18 @@ tr:last-child td { border-bottom: none; }
 
 tr.is-today { background-color: #fffaf0; }
 tr.urgent { border-left: 4px solid var(--danger); }
+
+.client-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.notes-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 
 .client-name {
   font-weight: 700;
@@ -223,8 +238,8 @@ tr.urgent { border-left: 4px solid var(--danger); }
 .actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
 
 .btn-icon {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 8px;
   border: none;
   display: flex;
@@ -288,11 +303,16 @@ tr.urgent { border-left: 4px solid var(--danger); }
   cursor: pointer;
   text-align: center;
   text-decoration: none;
+  min-height: 44px;
 }
 
 .btn-mobile-primary { background: var(--success); color: white; }
 .btn-mobile-secondary { background: #f1f2f6; color: var(--primary); }
-.btn-mobile-primary:disabled { opacity: 0.6; }
+.btn-mobile-primary:disabled,
+.btn-mobile-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 /* Responsive */
 @media (min-width: 768px) {

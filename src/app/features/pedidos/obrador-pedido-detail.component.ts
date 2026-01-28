@@ -6,7 +6,7 @@ import { Pedido, EstadoPedido } from '../../core/models/pedido.model';
 import { Observable, map, switchMap, BehaviorSubject } from 'rxjs';
 
 @Component({
-  selector: 'app-pedido-obrador-detail',
+  selector: 'app-obrador-pedido-detail',
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
@@ -112,9 +112,9 @@ import { Observable, map, switchMap, BehaviorSubject } from 'rxjs';
       </ng-template>
     </div>
   `,
-  styleUrl: './pedido-obrador-detail.component.scss'
+  styleUrl: './obrador-pedido-detail.component.scss'
 })
-export class PedidoObradorDetailComponent implements OnInit {
+export class ObradorPedidoDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private location = inject(Location);
   private productionService = inject(ProductionService);

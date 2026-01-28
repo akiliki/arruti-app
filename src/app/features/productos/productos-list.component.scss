@@ -19,6 +19,7 @@
   text-decoration: none; 
   transition: all 0.2s;
   box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+  min-height: 44px;
 }
 .btn-new:hover { background: #2563eb; transform: translateY(-1px); }
 
@@ -50,7 +51,7 @@ td { padding: 1.25rem 1.5rem; text-align: left; border-bottom: 1px solid #f1f5f9
 
 .badge { background: #e0f2fe; color: #0369a1; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; }
 
-.actions-cell { display: flex; gap: 0.5rem; }
+.actions-cell { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .btn-detail, .btn-edit {
   padding: 0.5rem 1rem;
   border-radius: 8px;
@@ -59,11 +60,24 @@ td { padding: 1.25rem 1.5rem; text-align: left; border-bottom: 1px solid #f1f5f9
   font-weight: 700;
   border: none;
   transition: all 0.2s;
+  min-height: 44px;
+}
+.btn-detail:disabled,
+.btn-edit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .btn-detail { background: #f1f5f9; color: #475569; }
 .btn-detail:hover { background: #e2e8f0; }
 .btn-edit { background: #eff6ff; color: #3b82f6; }
 .btn-edit:hover { background: #dbeafe; }
+
+.btn-new:focus-visible,
+.btn-detail:focus-visible,
+.btn-edit:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
 
 .empty-state, .loading { text-align: center; padding: 4rem; color: #64748b; font-weight: 500; }
 

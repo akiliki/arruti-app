@@ -16,7 +16,33 @@
   .back-btn {
     background: white; border: 1px solid #e2e8f0; padding: 0.5rem; border-radius: 10px;
     display: flex; cursor: pointer; color: #64748b;
+    min-width: 44px; min-height: 44px; align-items: center; justify-content: center;
     &:active { transform: scale(0.95); }
+}
+
+.responsive-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: 2fr 1fr;
+    align-items: start;
+  }
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.active-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .form-layout {
@@ -48,6 +74,10 @@
     color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;
     display: flex; align-items: center; gap: 0.5rem;
   }
+}
+
+.summary-card-top {
+  border-left: 4px solid #3b82f6;
 }
 
 .selected-vendedor-info {
@@ -184,7 +214,7 @@
     background: #3b82f6; color: white; font-size: 1.5rem;
     display: flex; align-items: center; justify-content: center; cursor: pointer;
     &:active { transform: scale(0.95); }
-    &:disabled { background: #cbd5e1; }
+    &:disabled { background: #cbd5e1; cursor: not-allowed; }
   }
   input { flex: 1; text-align: center; font-size: 1.25rem; font-weight: bold; }
 }
@@ -265,10 +295,11 @@
 .table-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
 
 .btn-mini-action {
-  width: 32px; height: 32px; border-radius: 8px; border: 1px solid #e2e8f0; background: white;
+  width: 44px; height: 44px; border-radius: 8px; border: 1px solid #e2e8f0; background: white;
   display: flex; align-items: center; justify-content: center; cursor: pointer; color: #64748b;
   &:hover { background: #f1f5f9; color: #3b82f6; border-color: #3b82f6; }
   &.del:hover { color: #ef4444; border-color: #ef4444; background: #fef2f2; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 
 .no-items-placeholder { padding: 2rem; text-align: center; color: #94a3b8; font-style: italic; background: #f8fafc; border-radius: 12px; margin-bottom: 1rem; border: 2px dashed #e2e8f0; }
@@ -282,6 +313,8 @@
   width: 100%; padding: 0.75rem; background: white; color: #3b82f6; border: 2px dashed #3b82f6;
   border-radius: 12px; font-weight: 600; cursor: pointer; margin-bottom: 1rem;
   &:hover { background: #eff6ff; }
+  min-height: 44px;
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 
 .line-actions {
@@ -325,6 +358,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    min-height: 44px;
   }
 
   .btn-confirm { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
@@ -335,6 +369,12 @@
   
   .btn-continue { background: #0f172a; color: white; border: none; width: 100%; }
   .btn-continue:hover { background: #1e293b; color: white; }
+  .btn-confirm:disabled,
+  .btn-confirm-add:disabled,
+  .btn-continue:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 
   .span-2 {
     grid-column: span 2;
@@ -388,6 +428,12 @@
       &:hover { background: #fecaca; }
     }
   }
+}
+
+.delivery-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .options-grid {

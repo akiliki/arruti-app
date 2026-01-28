@@ -11,7 +11,7 @@ import { Pedido } from '../../core/models/pedido.model';
 import { Observable, tap, BehaviorSubject, combineLatest, map, startWith, of, take } from 'rxjs';
 
 @Component({
-  selector: 'app-pedido-form',
+  selector: 'app-tienda-pedido-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   template: `
@@ -357,9 +357,9 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith, of, ta
       </div>
     </div>
   `,
-  styleUrl: './pedido-form.component.scss'
+  styleUrl: './tienda-pedido-form.component.scss'
 })
-export class PedidoFormComponent implements OnInit {
+export class TiendaPedidoFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private productionService = inject(ProductionService);
   private productoService = inject(ProductoService);

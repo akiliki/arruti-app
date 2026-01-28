@@ -1,5 +1,5 @@
 .form-container { padding: 1rem; max-width: 600px; margin: 0 auto; }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap; }
 .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 .field { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
 .field label { font-weight: 600; color: #444; }
@@ -17,4 +17,16 @@
 .actions { margin-top: 2rem; }
 .btn-save { width: 100%; background: #2196f3; color: white; border: none; padding: 1rem; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 1rem; }
 .btn-save:disabled { background: #ccc; cursor: not-allowed; }
-.btn-back { background: transparent; border: 1px solid #ddd; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
+.btn-back { background: transparent; border: 1px solid #ddd; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; min-height: 44px; }
+
+.btn-save { min-height: 44px; }
+.btn-link { min-height: 44px; }
+
+.btn-save:focus-visible,
+.btn-back:focus-visible,
+.btn-link:focus-visible,
+.field input:focus-visible,
+.field select:focus-visible {
+	outline: 2px solid #2196f3;
+	outline-offset: 2px;
+}

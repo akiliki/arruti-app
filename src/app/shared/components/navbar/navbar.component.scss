@@ -31,6 +31,8 @@
   border: none;
   cursor: pointer;
   padding: 0;
+  min-height: 44px;
+  min-width: 44px;
 }
 .navbar-toggle .bar {
   height: 3px;
@@ -76,9 +78,17 @@
   padding: 0.25rem 0.75rem;
   border-radius: 4px;
   cursor: pointer;
+  min-height: 44px;
 }
 .btn-logout:hover {
   background: rgba(255,255,255,0.1);
+}
+
+.navbar-toggle:focus-visible,
+.navbar-nav li a:focus-visible,
+.btn-logout:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 @media (max-width: 768px) {
@@ -112,6 +122,7 @@
     padding: 0.75rem 0;
     width: 100%;
     border-bottom: 1px solid rgba(255,255,255,0.1);
+    min-height: 44px;
   }
   .user-info {
     flex-direction: row;

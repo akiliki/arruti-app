@@ -6,7 +6,7 @@ import { Pedido, EstadoPedido } from '../../core/models/pedido.model';
 import { Observable, map, switchMap, catchError, of, take } from 'rxjs';
 
 @Component({
-  selector: 'app-update-status',
+  selector: 'app-tienda-update-status',
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
@@ -69,9 +69,9 @@ import { Observable, map, switchMap, catchError, of, take } from 'rxjs';
       </div>
     </ng-template>
   `,
-  styleUrl: './update-status.component.scss'
+  styleUrl: './tienda-update-status.component.scss'
 })
-export class UpdateStatusComponent implements OnInit {
+export class TiendaUpdateStatusComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private productionService = inject(ProductionService);

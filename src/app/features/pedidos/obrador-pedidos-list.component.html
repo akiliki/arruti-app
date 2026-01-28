@@ -1,0 +1,351 @@
+<div class="obrador-container">
+  <div class="header">
+    <h2>Producción de Obrador</h2>
+    <div class="header-actions">
+      <div class="threshold-wrapper">
+        <span class="threshold-label">Alertas próximas:</span>
+        <select class="threshold-select" [value]="upcomingThresholdHours" (change)="changeThreshold(+$any($event.target).value)">
+          <option [value]="2">2h</option>
+          <option [value]="4">4h</option>
+          <option [value]="8">8h</option>
+          <option [value]="24">24h</option>
+        </select>
+      </div>
+      <div class="auto-refresh">
+        <span class="dot" [class.active]="isRefreshing"></span>
+        Auto-refresh 30s
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-filters">
+    <div class="main-filter-row">
+      <div class="date-navigator">
+        <button class="btn-nav" (click)="changeDay(-1)">‹</button>
+        <div class="calendar-wrapper">
+          <input type="date" [formControl]="fechaFilter">
+          <span class="date-display">{{ isToday(fechaFilter.value) ? 'HOY' : (fechaFilter.value | date:'dd/MM') }}</span>
+        </div>
+        <button class="btn-nav" (click)="changeDay(1)">›</button>
+      </div>
+
+      <div class="timeslot-quick-nav">
+        <button class="ts-chip" [class.active]="selectedTimeSlots.length === 0" (click)="toggleTimeSlot('')">
+          Todo
+        </button>
+        <button class="ts-chip" [class.active]="selectedTimeSlots.includes('mañana-primera')" (click)="toggleTimeSlot('mañana-primera')">
+          -11h
+        </button>
+        <button class="ts-chip" [class.active]="selectedTimeSlots.includes('mediodia')" (click)="toggleTimeSlot('mediodia')">
+          -14h
+        </button>
+        <button class="ts-chip" [class.active]="selectedTimeSlots.includes('tarde-primera')" (click)="toggleTimeSlot('tarde-primera')">
+          -16h
+        </button>
+        <button class="ts-chip" [class.active]="selectedTimeSlots.includes('tarde-ultima')" (click)="toggleTimeSlot('tarde-ultima')">
+          -24h
+        </button>
+      </div>
+
+      <div class="toggle-group-wrapper">
+        <button class="toggle-btn" 
+                [class.active]="groupByTimeSlot.value" 
+                (click)="groupByTimeSlot.setValue(!groupByTimeSlot.value)">
+          {{ groupByTimeSlot.value ? '📂 POR FRANJAS' : '📄 LISTA ÚNICA' }}
+        </button>
+      </div>
+
+      <button class="btn-more-filters" (click)="showFilters = !showFilters" [class.active]="showFilters">
+        <span>{{ showFilters ? '✖' : '🔍' }}</span>
+      </button>
+    </div>
+
+    <div class="extra-filters" *ngIf="showFilters">
+      <div class="filter-group">
+        <label>Nombre del producto</label>
+        <input type="text" [formControl]="productoFilter" placeholder="Ej: Croissant, Tarta...">
+      </div>
+
+      <div class="filter-group">
+        <label>Familia de productos</label>
+        <select [formControl]="familiaFilter">
+          <option value="">Todas las familias</option>
+          <option *ngFor="let f of familias$ | async" [value]="f">{{f}}</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>Filtrar por Estado</label>
+        <div class="mini-status-chips" *ngIf="counts$ | async as counts">
+          <button class="mini-chip" [class.active]="isStatusActive('Pendiente')" (click)="toggleStatus('Pendiente')">
+            <span class="dot red"></span> Pendiente ({{counts.falta}})
+          </button>
+          <button class="mini-chip" [class.active]="isStatusActive('En Proceso')" (click)="toggleStatus('En Proceso')">
+            <span class="dot blue"></span> En curso ({{counts.enCurso}})
+          </button>
+          <button class="mini-chip" [class.active]="isStatusActive('Terminado')" (click)="toggleStatus('Terminado')">
+            <span class="dot green"></span> Terminado ({{counts.terminado}})
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-summary-bar" *ngIf="!showFilters">
+    <div class="status-chips-inline" *ngIf="counts$ | async as counts">
+      <div class="status-item" [class.active]="isStatusActive('Pendiente')" (click)="toggleStatus('Pendiente')">
+        <span class="indicator red"></span>
+        <strong>{{counts.falta}}</strong> Pendientes
+      </div>
+      <div class="status-item" [class.active]="isStatusActive('En Proceso')" (click)="toggleStatus('En Proceso')">
+        <span class="indicator blue"></span>
+        <strong>{{counts.enCurso}}</strong> En curso
+      </div>
+      <div class="status-item" [class.active]="isStatusActive('Terminado')" (click)="toggleStatus('Terminado')">
+        <span class="indicator green"></span>
+        <strong>{{counts.terminado}}</strong> hechos
+      </div>
+    </div>
+  </div>
+
+  <ng-container *ngIf="upcomingPedidos$ | async as upcoming">
+    <div class="alerts-section" *ngIf="upcoming.length > 0">
+      <div class="alert-header" (click)="showUpcomingList = !showUpcomingList">
+        <span class="alert-icon">⚠️</span>
+        <h3>Pedidos próximos sin empezar ({{ upcoming.length }})</h3>
+        <span class="chevron">{{ showUpcomingList ? '▼' : '▶' }}</span>
+      </div>
+      
+      <div class="upcoming-scroll" *ngIf="showUpcomingList">
+        <div *ngFor="let p of upcoming" class="upcoming-mini-card" (click)="setFechaToPedido(p)">
+          <span class="time">{{ p.fechaEntrega | date:'HH:mm' }}</span>
+          <span class="name">{{ p.producto }}</span>
+          <span class="qty">{{ p.cantidad }}u.</span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <div *ngIf="groupedPedidos$ | async as groups; else loading" class="production-groups">
+    
+    <!-- VISTA POR FRANJAS (CARDS) -->
+    <ng-container *ngIf="groupByTimeSlot.value">
+      <div *ngFor="let group of groups" class="timeslot-group">
+        <div class="timeslot-header">
+          <h3>{{ group.label }}</h3>
+          <span class="badge">{{ group.productGroups.length }} tipos de prod.</span>
+        </div>
+        
+        <div class="production-grid">
+          <div *ngFor="let productGroup of group.productGroups" 
+               class="product-group-card" 
+               [class.in-process]="productGroup.estadoGlobal === 'En Proceso'"
+               [class.urgent]="productGroup.isUrgent"
+               [class.finished]="productGroup.estadoGlobal === 'Terminado'">
+            
+            <div class="product-group-header">
+              <div class="total-badge">
+                <span class="qty">{{ productGroup.totalCantidad }}</span>
+                <span class="unit">u.</span>
+              </div>
+              <div class="product-info">
+                <div class="name">{{ productGroup.producto }}</div>
+              </div>
+            </div>
+
+            <div class="talla-groups-container">
+              <div *ngFor="let tg of productGroup.tallaGroups" class="talla-subgroup" 
+                   [class.in-process]="tg.estadoGlobal === 'En Proceso'"
+                   [class.finished]="tg.estadoGlobal === 'Terminado'">
+                
+                <div class="talla-header">
+                  <div class="talla-info">
+                    <span class="talla-label">
+                      {{ tg.talla }}
+                    </span>
+                    <div class="rellenos-breakdown">
+                      <ng-container *ngFor="let r of tg.rellenoSummary">
+                        <span *ngIf="r.relleno" class="relleno-tag" [class.with-note]="r.hasNotes">
+                          {{ r.relleno }}: <strong>{{ r.cantidad }}</strong>
+                          <span *ngIf="r.hasNotes" class="mini-note-dot">●</span>
+                        </span>
+                      </ng-container>
+                    </div>
+                  </div>
+                  <div class="talla-qty-badge">{{ tg.totalCantidad }} ud. total</div>
+                </div>
+
+                <div class="orders-container">
+                  <div *ngFor="let pedido of tg.pedidos" class="order-item" [class.urgent]="isUrgent(pedido.fechaEntrega)">
+                    <div class="order-main">
+                      <span class="time">{{ pedido.fechaEntrega | date:'HH:mm' }}</span>
+                      <span class="qty">{{ pedido.cantidad }}u.</span>
+                      <span class="client">{{ pedido.nombreCliente || 'Mostrador' }}</span>
+                      
+                      <div class="actions">
+                        <!-- Botón de detalle individual (talla group expanded) -->
+                        <button (click)="tg.expanded = !tg.expanded" 
+                                class="btn-detail-toggle"
+                                [class.active]="tg.expanded"
+                              >
+                          {{ tg.expanded ? 'Ocultar' : 'Ver' }} detalle 📄
+                        </button>
+
+                        <button *ngIf="pedido.estado === 'Pendiente'" 
+                                class="btn-action start" 
+                                (click)="updateStatus(pedido.id, 'En Proceso')"
+                                [disabled]="updatingId === pedido.id">
+                          EMPEZAR
+                        </button>
+                        <button *ngIf="pedido.estado === 'En Proceso'" 
+                                class="btn-action finish" 
+                                (click)="updateStatus(pedido.id, 'Terminado')"
+                                [disabled]="updatingId === pedido.id">
+                          TERMINAR
+                        </button>
+                        <span *ngIf="pedido.estado === 'Terminado' || pedido.estado === 'Entregado'" class="done-mark">✓</span>
+                      </div>
+                    </div>
+                    <div class="notes" *ngIf="tg.expanded && (pedido.notasPastelero || pedido.relleno)">
+                      <div *ngIf="pedido.relleno" class="detail-relleno-text"><strong>RELLENO:</strong> {{ pedido.relleno }}</div>
+                      <div *ngIf="pedido.notasPastelero"><strong>NOTA:</strong> {{ pedido.notasPastelero }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- VISTA LISTA ÚNICA (TABLA AGREGADA) -->
+    <ng-container *ngIf="!groupByTimeSlot.value && groups.length > 0">
+      <div class="table-view-container">
+        <table class="production-table">
+          <thead>
+            <tr>
+              <th>PRODUCTO</th>
+              <th>RACIONES</th>
+              <th class="text-center">UD.</th>
+              <th>DETALLE RELLENOS</th>
+              <th>ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let pg of groups[0].productGroups">
+              <ng-container *ngFor="let tg of pg.tallaGroups; let i = index">
+                <!-- Fila Principal de Talla -->
+                <tr [class.tr-urgent]="pg.isUrgent" 
+                    [class.tr-finished]="tg.estadoGlobal === 'Terminado'">
+                  <td class="td-product">
+                    {{ pg.producto }}
+                  </td>
+                  <td class="td-talla">
+                    <div class="talla-main">
+                      {{ tg.talla }}
+                      <span *ngIf="tg.hasAnyNotes && !tg.expanded" class="note-warning-dot" title="Tiene notas">📝</span>
+                    </div>
+                  </td>
+                  <td class="td-total text-center">
+                    <strong>{{ tg.totalCantidad }}</strong>
+                  </td>
+                  <td class="td-relleno">
+                    <div class="table-rellenos">
+                      <ng-container *ngFor="let r of tg.rellenoSummary">
+                        <span *ngIf="r.relleno" class="table-r-badge" [class.r-note]="r.hasNotes">
+                          {{ r.relleno }}: <strong>{{ r.cantidad }}</strong>
+                        </span>
+                      </ng-container>
+                    </div>
+                  </td>
+                  <td class="td-actions">
+                    <div class="table-group-actions">
+                      <!-- Botón de detalle -->
+                      <button (click)="tg.expanded = !tg.expanded" 
+                              class="btn-toggle-notes"
+                              [class.active]="tg.expanded"
+                              title="Ver desglose de pedidos">
+                        {{ tg.expanded ? 'Ocultar' : 'Ver' }} detalle 📄
+                      </button>
+
+                      <!-- Botón Empezar: Si hay alguno pendiente -->
+                      <button *ngIf="hasPending(tg)" 
+                              (click)="updateGroupStatus(tg, 'En Proceso')" 
+                              class="btn-t-action start">
+                        EMPEZAR ({{ countByStatus(tg, 'Pendiente') }})
+                      </button>
+                      
+                      <!-- Botón Terminar: Si hay alguno en proceso -->
+                      <button *ngIf="hasInProcess(tg)" 
+                              (click)="updateGroupStatus(tg, 'Terminado')" 
+                              class="btn-t-action finish">
+                        TERMINAR ({{ countByStatus(tg, 'En Proceso') }})
+                      </button>
+
+                      <span *ngIf="tg.estadoGlobal === 'Terminado'" class="done-check">
+                        ✓ TODO HECHO
+                        <button (click)="updateGroupStatus(tg, 'Pendiente')" class="btn-undo" title="Revertir a pendiente">↩</button>
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Filas Detalle (Desplegadas) -->
+                <ng-container *ngIf="tg.expanded">
+                  <tr *ngFor="let p of tg.pedidos" class="tr-order-detail" [class.urgent]="isUrgent(p.fechaEntrega)">
+                    <td colspan="5">
+                      <div class="order-detail-content">
+                        <!-- Fila 1: Producto, Raciones, Relleno, Unidades -->
+                        <div class="d-header-row">
+                          <span class="d-p-name">{{ pg.producto }}</span>
+                          <span class="d-p-talla">{{ tg.talla }}</span>
+                          <span class="d-p-relleno" *ngIf="p.relleno">{{ p.relleno }}</span>
+                          <span class="d-p-qty">{{ p.cantidad }}u</span>
+                        </div>
+
+                        <!-- Fila 2: Nota (si existe) -->
+                        <div class="d-note-row" *ngIf="p.notasPastelero">
+                          <span class="d-note-text">📝 {{ p.notasPastelero }}</span>
+                        </div>
+
+                        <!-- Fila 3: Hora, Nombre, Botón -->
+                        <div class="d-footer-row">
+                          <div class="d-client-info">
+                            <span class="d-p-time">{{ p.fechaEntrega | date:'HH:mm' }}</span>
+                            <span class="d-p-client">{{ p.nombreCliente || 'Mostrador' }}</span>
+                          </div>
+                          <div class="d-p-actions">
+                            <button *ngIf="p.estado === 'Pendiente'" 
+                                    class="btn-mini-action start" 
+                                    (click)="updateStatus(p.id, 'En Proceso')">
+                              EMPEZAR
+                            </button>
+                            <button *ngIf="p.estado === 'En Proceso'" 
+                                    class="btn-mini-action finish" 
+                                    (click)="updateStatus(p.id, 'Terminado')">
+                              TERMINAR
+                            </button>
+                            <span *ngIf="p.estado === 'Terminado' || p.estado === 'Entregado'" class="done-mark-mini">✓ HECHO</span>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </ng-container>
+              </ng-container>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+
+    <div *ngIf="groups.length === 0" class="empty-state">
+      No hay productos pendientes de producir.
+    </div>
+  </div>
+
+  <ng-template #loading>
+    <div class="loading-state">Cargando producción...</div>
+  </ng-template>
+</div>

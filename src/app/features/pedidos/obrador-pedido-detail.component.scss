@@ -1,6 +1,6 @@
 .detail-container { max-width: 800px; margin: 0 auto; padding: 2rem; }
-.header { display: flex; align-items: center; gap: 2rem; margin-bottom: 2rem; }
-.btn-back { background: #34495e; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+.header { display: flex; align-items: center; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap; }
+.btn-back { background: #34495e; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; min-height: 44px; }
 
 .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid #d35400; }
 
@@ -66,9 +66,19 @@
    display: block; width: 100%; padding: 10px; margin-top: 15px; background: none; border: 1px solid #fab1a0; color: #e17055; border-radius: 8px; font-weight: bold; cursor: pointer;
 }
 .btn-cancel-link:hover { background: #fff5f5; color: #d63031; border-color: #ff7675; }
+.btn-cancel-link:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .done-message { text-align: center; color: #27ae60; font-weight: bold; font-size: 1.2rem; padding: 1rem; }
 .cancelled-message { text-align: center; color: #e17055; font-weight: bold; font-size: 1.2rem; padding: 1rem; border: 2px solid #fab1a0; border-radius: 8px; background: #fff5f5; }
 
 .metadata { padding: 1rem 2rem; background: #f8f9fa; border-top: 1px solid #eee; display: flex; justify-content: space-between; color: #95a5a6; font-size: 0.8rem; }
 .loading-state { text-align: center; padding: 4rem; color: #666; }
+
+@media (max-width: 768px) {
+  .detail-container { padding: 1rem; }
+  .header { gap: 1rem; }
+  .info-grid { grid-template-columns: 1fr; padding: 1rem; }
+  .notes-section { padding: 0 1rem 1rem; }
+  .production-actions { padding: 1.5rem; }
+  .metadata { flex-direction: column; gap: 0.5rem; }
+}
