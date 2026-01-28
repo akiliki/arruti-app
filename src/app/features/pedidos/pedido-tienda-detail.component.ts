@@ -118,66 +118,7 @@ import { Observable, map, switchMap, BehaviorSubject, of, forkJoin } from 'rxjs'
       </ng-template>
     </div>
   `,
-  styles: [`
-    .detail-container { max-width: 800px; margin: 0 auto; padding: 1rem; }
-    .header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
-    .btn-back { background: #eee; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-    
-    .card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-    
-    .status-banner { padding: 1rem; text-align: center; font-weight: 800; text-transform: uppercase; font-size: 1rem; letter-spacing: 0.5px; }
-    .status-banner.pendiente { background: #fff7ed; color: #c2410c; }
-    .status-banner.en-proceso { background: #eff6ff; color: #1d4ed8; }
-    .status-banner.producido { background: #f0fdf4; color: #15803d; }
-    .status-banner.entregado { background: #f8fafc; color: #64748b; }
-    .status-banner.cancelado { background: #fef2f2; color: #991b1b; }
-
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding: 1.5rem; }
-    .info-group.wide { grid-column: span 2; }
-    .info-group label { display: block; font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem; }
-    .value { font-size: 1.1rem; color: #1e293b; font-weight: 600; }
-    .value.highlight { color: #d35400; font-weight: 800; font-size: 1.5rem; }
-
-    .section-title { font-size: 0.9rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 1rem; }
-    .products-list-section { padding: 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
-    .product-entry { padding: 1rem; background: white; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
-    .product-main { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem; }
-    .product-main .qty { font-weight: 800; color: #d35400; font-size: 1.2rem; }
-    .product-main .name { font-weight: 700; font-size: 1.1rem; color: #0f172a; }
-    .shop-badge { background: #dcfce7; color: #166534; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: auto; border: 1px solid #bbf7d0; }
-    .product-details { display: flex; flex-wrap: wrap; gap: 0.5rem; font-size: 0.9rem; }
-    .product-details .talla { background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
-    .product-details .relleno { color: #d97706; }
-
-    .notes-section { padding: 1.5rem; display: grid; grid-template-columns: 1fr; gap: 1rem; }
-    @media (min-width: 640px) { .notes-section { grid-template-columns: 1fr 1fr; } }
-    
-    .note-box { padding: 1rem; border-radius: 12px; }
-    .note-box label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; display: block; }
-    .note-box p { margin: 0; font-size: 0.95rem; line-height: 1.5; }
-    .note-box.pastelero { background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; }
-    .note-box.tienda { background: #f0f9ff; border: 1px solid #e0f2fe; color: #075985; }
-
-    .actions { padding: 1.5rem; text-align: center; border-top: 1px solid #e2e8f0; background: #f8fafc; }
-    .btn-deliver { 
-      background: #059669; color: white; border: none; padding: 1rem 2rem; border-radius: 12px; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; width: 100%; box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.4);
-      &:active { transform: scale(0.98); }
-    }
-    .btn-deliver:disabled { background: #9ca3af; cursor: not-allowed; box-shadow: none; }
-    .btn-edit-secondary { 
-      background: white; color: #475569; border: 1px solid #e2e8f0; padding: 0.85rem 2rem; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 0.75rem;
-      &:hover { background: #f8fafc; border-color: #cbd5e1; }
-    }
-    .btn-cancel-secondary { 
-      background: #fef2f2; color: #991b1b; border: 1px solid #fee2e2; padding: 0.85rem 2rem; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 0.75rem;
-      &:hover { background: #fee2e2; }
-    }
-    .delivery-success { color: #059669; font-weight: 800; font-size: 1.25rem; }
-
-    .metadata { padding: 0.75rem 1.5rem; background: #f1f5f9; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; color: #94a3b8; font-size: 0.7rem; }
-    .vendedor-badge { display: inline-flex; align-items: center; gap: 6px; background: #ecfdf5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; }
-    .loading-state, .error-state { text-align: center; padding: 4rem; color: #64748b; }
-  `]
+  styleUrl: './pedido-tienda-detail.component.scss'
 })
 export class PedidoTiendaDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);

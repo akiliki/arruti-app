@@ -14,7 +14,7 @@ Esta guía establece las reglas de colaboración y arquitectura para el desarrol
 ## 🛠️ Stack Tecnológico
 *   **Frontend:** Angular (Última versión estable).
 *   **Lenguaje:** TypeScript.
-*   **Estilo:** CSS/SCSS (según se defina).
+*   **Estilo:** CSS/SCSS. **Importante:** Los estilos deben estar siempre en archivos separados; no se permite el uso de estilos inline dentro de los componentes.
 *   **Estado:** Signals o Services (según complejidad).
 
 ## ✅ Estrategia de Pruebas

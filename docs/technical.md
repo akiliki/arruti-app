@@ -119,7 +119,8 @@ El middleware (Google Apps Script) expondrá un endpoint GET que devuelve la inf
 
 ## Arquitectura de Capas (Angular)
 
-... (existente)
+### Estándares de Componentes
+- **Separación de CSS/SCSS**: Los estilos de los componentes deben estar siempre en archivos independientes (ej. `nombre.component.scss`). No se permite el uso de estilos inline (`styles: [...]`) dentro del decorador `@Component`.
 
 ## Interfaz de Usuario y Experiencia (UX/UI)
 

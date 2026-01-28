@@ -27,12 +27,7 @@ import { Usuario } from '../../core/models/usuario.model';
       </table>
     </div>
   `,
-  styles: [`
-    .container { padding: 2rem; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    th, td { padding: 0.75rem; border: 1px solid #ddd; text-align: left; }
-    th { background-color: #f5f5f5; }
-  `]
+  styleUrl: './usuarios-list.component.scss'
 })
 export class UsuariosListComponent {
   usuarios: Usuario[] = [

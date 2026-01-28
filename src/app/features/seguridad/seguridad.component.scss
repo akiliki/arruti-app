@@ -1,0 +1,21 @@
+.seguridad-container { padding: 1rem; }
+.sub-nav {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+}
+.sub-nav a {
+  text-decoration: none;
+  color: #666;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
+.sub-nav a:hover { background-color: #f0f0f0; }
+.sub-nav a.active {
+  color: white;
+  background-color: #3f51b5;
+}
+.content { background: white; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
