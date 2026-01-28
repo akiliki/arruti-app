@@ -24,6 +24,9 @@ import { AuthService } from '../../../core/services/auth.service';
         <li *ngIf="authService.hasPermission(user.perfilId, 'obrador')">
           <a routerLink="/obrador" routerLinkActive="active" (click)="isMenuOpen = false">Obrador</a>
         </li>
+        <li *ngIf="authService.hasPermission(user.perfilId, 'obrador') || authService.hasPermission(user.perfilId, 'catalogo')">
+          <a routerLink="/recetas" routerLinkActive="active" (click)="isMenuOpen = false">Recetas</a>
+        </li>
         <li *ngIf="authService.hasPermission(user.perfilId, 'catalogo')">
           <a routerLink="/productos" routerLinkActive="active" (click)="isMenuOpen = false">Catálogo</a>
         </li>

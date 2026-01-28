@@ -1,0 +1,132 @@
+.table-container {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.main-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.95rem;
+
+  th {
+    background: #f8fafc;
+    padding: 1rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  td {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    vertical-align: middle;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover td {
+    background: #f8fafc;
+  }
+
+  .bold { font-weight: 600; color: #1e293b; }
+}
+
+.time-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: #ecfeff;
+  color: #0891b2;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.ing-pill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  max-width: 300px;
+}
+
+.ing-pill {
+  font-size: 0.75rem;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+}
+
+.ing-more {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+
+  button {
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .btn-view {
+    background: white;
+    border-color: #e2e8f0;
+    color: #64748b;
+    &:hover { background: #f8fafc; border-color: #3b82f6; color: #3b82f6; }
+  }
+
+  .btn-prod {
+    background: #fdf4ff;
+    color: #a21caf;
+    &:hover { background: #fae8ff; border-color: #d946ef; }
+  }
+
+  .btn-edit {
+    background: #f0f9ff;
+    color: #0369a1;
+    &:hover { background: #e0f2fe; }
+  }
+}
+
+.empty-recetas {
+  text-align: center;
+  padding: 4rem;
+  background: #f8fafc;
+  border: 2px dashed #e2e8f0;
+  border-radius: 12px;
+  color: #94a3b8;
+  font-style: italic;
+  margin: 1rem 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-table {
+    th:nth-child(3), td:nth-child(3),
+    th:nth-child(4), td:nth-child(4) {
+      display: none;
+    }
+  }
+}

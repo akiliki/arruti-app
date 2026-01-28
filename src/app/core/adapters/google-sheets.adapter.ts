@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Pedido, ProduccionStats, EstadoPedido } from '../models/pedido.model';
 import { Producto } from '../models/producto.model';
 import { Empleado } from '../models/empleado.model';
+import { Receta } from '../models/receta.model';
 
 interface ApiResponse {
   status: string;
@@ -37,6 +38,19 @@ interface ProductApiResponse {
     nombre: string;
     raciones_tallas: string | number; // Can be string or number from Sheets
     rellenos: string;
+  }>;
+}
+
+interface RecetaApiResponse {
+  status: string;
+  data: Array<{
+    id: string;
+    id_producto: string;
+    nombre_producto: string;
+    raciones: string;
+    ingredientes: string;
+    pasos: string;
+    tiempo_total: string;
   }>;
 }
 
@@ -121,6 +135,34 @@ export class GoogleSheetsAdapter {
   }
 
   /**
+   * Transforma recetas de la API al modelo de dominio
+   */
+  adaptRecetas(response: RecetaApiResponse): Receta[] {
+    return (response.data || []).map(item => {
+      let ingredientes: any[] = [];
+      try {
+        if (item.ingredientes && String(item.ingredientes).startsWith('[')) {
+          ingredientes = JSON.parse(String(item.ingredientes));
+        } else if (item.ingredientes) {
+          ingredientes = [{ nombre: String(item.ingredientes), cantidad: '', unidad: '' }];
+        }
+      } catch (e) {
+        ingredientes = [{ nombre: String(item.ingredientes), cantidad: '', unidad: '' }];
+      }
+
+      return {
+        id: item.id,
+        idProducto: item.id_producto,
+        nombreProducto: item.nombre_producto,
+        raciones: item.raciones,
+        ingredientes: ingredientes,
+        pasos: item.pasos,
+        tiempoTotal: item.tiempo_total
+      };
+    });
+  }
+
+  /**
    * Prepara un producto para ser enviado a la API
    */
   prepareProductoForPost(producto: Producto): any {
@@ -133,8 +175,21 @@ export class GoogleSheetsAdapter {
     };
   }
 
-  /**
-   * Transforma las estadísticas de la API al modelo de dominio
+  /**   * Prepara una receta para ser enviada a la API
+   */
+  prepareRecetaForPost(receta: Receta): any {
+    return {
+      id: receta.id,
+      id_producto: receta.idProducto,
+      nombre_producto: receta.nombreProducto,
+      raciones: receta.raciones,
+      ingredientes: JSON.stringify(receta.ingredientes),
+      pasos: receta.pasos,
+      tiempo_total: receta.tiempoTotal
+    };
+  }
+
+  /**   * Transforma las estadísticas de la API al modelo de dominio
    */
   adaptStats(response: ApiResponse): ProduccionStats {
     if (!response.stats) {

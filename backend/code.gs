@@ -19,6 +19,10 @@ function doGet(e) {
       return handleGetProductos(ss);
     }
 
+    if (type === 'recetas') {
+      return handleGetRecetas(ss);
+    }
+
     if (type === 'empleados') {
       return handleGetEmpleados(ss);
     }
@@ -120,6 +124,22 @@ function doPost(e) {
         throw new Error("La hoja 'Productos' no existe.");
       }
       return handleUpdateProducto(sheetProductos, payload);
+    }
+
+    if (payload.action === 'addReceta') {
+      const sheetRecetas = ss.getSheetByName('Recetas');
+      if (!sheetRecetas) {
+        throw new Error("La hoja 'Recetas' no existe. Por favor, créala.");
+      }
+      return handleAddReceta(sheetRecetas, payload);
+    }
+
+    if (payload.action === 'updateReceta') {
+      const sheetRecetas = ss.getSheetByName('Recetas');
+      if (!sheetRecetas) {
+        throw new Error("La hoja 'Recetas' no existe.");
+      }
+      return handleUpdateReceta(sheetRecetas, payload);
     }
 
     const sheetPedidos = ss.getSheetByName('Pedidos');
@@ -454,6 +474,87 @@ function handleUpdateMultipleOrders(sheet, pedidos) {
   });
 
   return createResponse({ status: 'success', message: 'Pedidos procesados (actualizados/añadidos)' });
+}
+
+/**
+ * Obtiene la lista de recetas
+ */
+function handleGetRecetas(ss) {
+  const sheet = ss.getSheetByName('Recetas');
+  if (!sheet) {
+    return createResponse({ status: "error", message: "Hoja 'Recetas' no encontrada." });
+  }
+
+  const values = sheet.getDataRange().getValues();
+  if (values.length < 2) {
+    return createResponse({ status: "success", data: [] });
+  }
+
+  const rows = values.slice(1);
+  const data = rows.map(row => ({
+    id: row[0],
+    id_producto: row[1],
+    nombre_producto: row[2],
+    raciones: row[3],
+    ingredientes: row[4],
+    pasos: row[5],
+    tiempo_total: row[6]
+  }));
+
+  return createResponse({
+    status: "success",
+    data: data
+  });
+}
+
+/**
+ * Añade una nueva receta
+ */
+function handleAddReceta(sheet, payload) {
+  const newRow = [
+    payload.id,
+    payload.id_producto,
+    payload.nombre_producto,
+    payload.raciones,
+    payload.ingredientes,
+    payload.pasos,
+    payload.tiempo_total
+  ];
+
+  sheet.appendRow(newRow);
+
+  return createResponse({
+    status: "success",
+    message: "Receta añadida correctamente",
+    id: payload.id
+  });
+}
+
+/**
+ * Actualiza una receta existente
+ */
+function handleUpdateReceta(sheet, payload) {
+  const data = sheet.getDataRange().getValues();
+  const idToUpdate = payload.id;
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === idToUpdate) {
+      const row = i + 1;
+      sheet.getRange(row, 2).setValue(payload.id_producto);
+      sheet.getRange(row, 3).setValue(payload.nombre_producto);
+      sheet.getRange(row, 4).setValue(payload.raciones);
+      sheet.getRange(row, 5).setValue(payload.ingredientes);
+      sheet.getRange(row, 6).setValue(payload.pasos);
+      sheet.getRange(row, 7).setValue(payload.tiempo_total);
+      
+      return createResponse({
+        status: "success",
+        message: "Receta actualizada correctamente"
+      });
+    }
+  }
+  
+  throw new Error("Receta no encontrada para actualizar.");
 }
 
 /**

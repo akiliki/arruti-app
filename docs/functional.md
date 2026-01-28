@@ -23,6 +23,24 @@ Como gestor de la pastelería, quiero ver un resumen en tiempo real del estado d
 * Si no hay conexión o falla la API, debe mostrarse un mensaje de error claro.
 * **Optimismo:** Los indicadores deben reaccionar inmediatamente a los cambios de estado locales.
 
+### CU-07: Gestión de Recetas de Producción
+**Estado:** Definido
+**Criticidad:** MEDIA
+
+**Descripción:**
+Como pastelero, quiero registrar las recetas de cada producto y tamaño para asegurar la consistencia en la producción.
+
+**Flujo Principal:**
+1. El usuario accede al detalle de un Producto.
+2. El usuario selecciona "Añadir Receta" o selecciona una ración para ver su receta.
+3. El sistema permite introducir: Raciones (tamaño), Ingredientes, Pasos, y Tiempo de elaboración.
+4. Los datos se guardan vinculados al ID del producto.
+
+**Criterios de Aceptación:**
+* Una receta debe estar vinculada a un producto y un tamaño/ración específico.
+* Los campos de ingredientes y pasos deben permitir texto extenso.
+* El tiempo de elaboración debe ser visible en el resumen del producto.
+
 ### CU-02: Gestión de Catálogo de Productos
 **Estado:** Definido
 **Criticidad:** ALTA

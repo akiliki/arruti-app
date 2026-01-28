@@ -51,6 +51,17 @@ El sistema utiliza Google Sheets como base de datos centralizada.
 | Raciones_Tallas | String | Lista separada por comas |
 | Rellenos | String | Lista separada por comas |
 
+#### Hoja: `Recetas`
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| ID | String | UUID (v4) |
+| ID_Producto | String | Referencia a Productos |
+| Nombre_Producto | String | Denormalizado |
+| Raciones | String | Tamaño específico |
+| Ingredientes | String | Detalle de ingredientes |
+| Pasos | String | Guía de preparación |
+| Tiempo_Total | String | Tiempo estimado |
+
 #### Hoja: `Usuarios` (Planificado)
 | Columna | Tipo | Descripción |
 | :--- | :--- | :--- |

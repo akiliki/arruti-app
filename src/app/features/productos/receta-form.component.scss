@@ -1,0 +1,145 @@
+@import '../../../styles.scss';
+
+.page-container {
+  padding: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+
+  h2 { margin: 0; color: #1e293b; }
+}
+
+.btn-back {
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #64748b;
+  font-weight: 500;
+  &:hover { background: #f8fafc; }
+}
+
+.card {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #475569;
+  }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 1rem;
+    &:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+}
+
+.ingredients-table-wrapper {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+
+  .ingredients-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+
+    th { text-align: left; font-size: 0.75rem; text-transform: uppercase; color: #64748b; padding: 0.5rem; }
+    td { padding: 0.25rem 0.5rem; }
+    
+    input, select { padding: 0.5rem; border-width: 1px; border-radius: 6px; }
+  }
+
+  .btn-remove-ing {
+    background: #fee2e2;
+    color: #ef4444;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: bold;
+    &:hover { background: #fecaca; }
+  }
+
+  .btn-add-ing {
+    width: 100%;
+    padding: 0.6rem;
+    background: white;
+    color: #3b82f6;
+    border: 1px dashed #3b82f6;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    &:hover { background: #eff6ff; }
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.btn-cancel {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-save {
+  padding: 0.75rem 2rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  &:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+  }
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 3rem;
+  color: #64748b;
+}
+
+.error-text {
+  color: #ef4444;
+}

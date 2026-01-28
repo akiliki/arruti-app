@@ -48,8 +48,24 @@ export const routes: Routes = [
         loadComponent: () => import('./features/productos/producto-form.component').then(m => m.ProductoFormComponent)
       },
       {
+        path: 'productos/:id/receta/nueva',
+        loadComponent: () => import('./features/productos/receta-form.component').then(m => m.RecetaFormComponent)
+      },
+      {
+        path: 'productos/:id/receta/:idReceta',
+        loadComponent: () => import('./features/productos/receta-form.component').then(m => m.RecetaFormComponent)
+      },
+      {
         path: 'productos/:id',
         loadComponent: () => import('./features/productos/producto-detail.component').then(m => m.ProductoDetailComponent)
+      },
+      {
+        path: 'recetas',
+        loadComponent: () => import('./features/productos/all-recetas-list.component').then(m => m.AllRecetasListComponent)
+      },
+      {
+        path: 'recetas/:id',
+        loadComponent: () => import('./features/productos/receta-detail.component').then(m => m.RecetaDetailComponent)
       },
       {
         path: 'pedidos/:id',
