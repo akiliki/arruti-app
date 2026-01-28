@@ -49,7 +49,7 @@ describe('ProductoService', () => {
   });
 
   it('should update signal optimistically when adding a product', () => {
-    service.addProducto({ familia: 'B', producto: 'Optimista', tallasRaciones: [] }).subscribe();
+    service.addProducto({ familia: 'B', producto: 'Optimista', tallasRaciones: [], rellenos: [] }).subscribe();
 
     // El signal debe tener el nuevo valor INMEDIATAMENTE
     expect(service.productosSignal().some(p => p.producto === 'Optimista')).toBeTrue();
@@ -60,7 +60,7 @@ describe('ProductoService', () => {
   });
 
   it('should rollback signal if adding a product fails', () => {
-    service.addProducto({ familia: 'B', producto: 'Falla', tallasRaciones: [] }).subscribe({
+    service.addProducto({ familia: 'B', producto: 'Falla', tallasRaciones: [], rellenos: [] }).subscribe({
       error: () => {} 
     });
 
@@ -72,7 +72,7 @@ describe('ProductoService', () => {
 
   it('should update signal optimistically when updating a product', () => {
     // Primero añadimos uno
-    const productoOriginal = { id: 'edit-1', familia: 'A', producto: 'Original', tallasRaciones: [] };
+    const productoOriginal = { id: 'edit-1', familia: 'A', producto: 'Original', tallasRaciones: [], rellenos: [] };
     // Simulamos carga inicial
     service['productosState'].next([productoOriginal]);
 

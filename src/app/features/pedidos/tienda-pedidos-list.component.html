@@ -1,13 +1,12 @@
 <div class="page-container">
-  <div class="header-section">
-    <h1>Pedidos</h1>
-    <button class="btn-new" routerLink="/nuevo-pedido">
+  <app-pedidos-header title="Pedidos" [variant]="'list'" [titleLevel]="1">
+    <button header-actions class="btn-new" routerLink="/nuevo-pedido">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
         <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
       </svg>
       NUEVO PEDIDO
     </button>
-  </div>
+  </app-pedidos-header>
 
   <div class="filters-bar">
     <div class="filter-group">
@@ -78,18 +77,10 @@
                   <span class="full-date">{{ pedido.fechaEntrega | date:'dd/MM' }}</span>
                 </td>
                 <td class="vendedor-cell">
-                  <span class="vendedor-badge" *ngIf="pedido.vendedor">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                      <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    {{ pedido.vendedor }}
-                  </span>
+                  <app-vendedor-badge [vendedor]="pedido.vendedor"></app-vendedor-badge>
                 </td>
                 <td>
-                  <span class="status-badge" [attr.data-status]="pedido.estado.toLowerCase().replace(' ', '-')">
-                    {{ pedido.estado }}
-                  </span>
+                  <app-pedido-status-badge [status]="pedido.estado"></app-pedido-status-badge>
                 </td>
                 <td>
                   <div class="actions">
@@ -125,9 +116,7 @@
                 <span class="client">{{ pedido.nombreCliente || 'Anónimo' }}</span>
                 <span class="delivery-time">{{ pedido.fechaEntrega | date:'HH:mm' }} • {{ pedido.fechaEntrega | date:'dd/MM' }}</span>
               </div>
-              <span class="status-badge" [attr.data-status]="pedido.estado.toLowerCase().replace(' ', '-')">
-                {{ pedido.estado }}
-              </span>
+              <app-pedido-status-badge [status]="pedido.estado"></app-pedido-status-badge>
             </div>
 
             <div class="card-body">
@@ -171,20 +160,18 @@
 
       </div>
       <ng-template #empty>
-        <div class="empty-state">
+        <app-empty-state title="No se encontraron pedidos.">
           <svg viewBox="0 0 24 24" width="48" height="48" fill="#ccc">
             <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM17 12H7v-2h10v2z"/>
           </svg>
-          <p>No se encontraron pedidos.</p>
-        </div>
+        </app-empty-state>
       </ng-template>
     </ng-container>
 
     <ng-template #loading>
-      <div class="loading-state">
+      <app-loading-state text="Cargando pedidos...">
         <div class="spinner"></div>
-        <p>Cargando pedidos...</p>
-      </div>
+      </app-loading-state>
     </ng-template>
   </div>
 </div>

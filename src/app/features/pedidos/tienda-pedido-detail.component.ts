@@ -4,21 +4,31 @@ import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { ProductionService } from '../../core/services/production.service';
 import { Pedido } from '../../core/models/pedido.model';
 import { Observable, map, switchMap, BehaviorSubject, of, forkJoin } from 'rxjs';
+import { PedidosHeaderComponent } from '../../shared/components/pedidos-header/pedidos-header.component';
+import { VendedorBadgeComponent } from '../../shared/components/vendedor-badge/vendedor-badge.component';
+import { PedidoNotesComponent } from '../../shared/components/pedido-notes/pedido-notes.component';
+import { PedidoActionsComponent } from '../../shared/components/pedido-actions/pedido-actions.component';
+import { PedidoStatusClassPipe } from '../../shared/pipes/pedido-status-class.pipe';
 
 @Component({
   selector: 'app-tienda-pedido-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    PedidosHeaderComponent,
+    VendedorBadgeComponent,
+    PedidoNotesComponent,
+    PedidoActionsComponent,
+    PedidoStatusClassPipe
+  ],
   template: `
     <div class="detail-container">
-      <div class="header">
-        <button class="btn-back" (click)="goBack()">← Volver a Tienda</button>
-        <h2>Detalle del Pedido (Tienda)</h2>
-      </div>
+      <app-pedidos-header title="Detalle del Pedido (Tienda)" backText="← Volver a Tienda" (back)="goBack()"></app-pedidos-header>
 
       <div *ngIf="pedidoGroup$ | async as items; else loading" class="content">
         <div class="card" *ngIf="items.length > 0; else noOrder">
-          <div class="status-banner" [ngClass]="items[0].estado.toLowerCase().replace(' ', '-')">
+          <div class="status-banner" [ngClass]="items[0].estado | pedidoStatusClass">
             Estado: {{ items[0].estado }}
           </div>
 
@@ -36,13 +46,7 @@ import { Observable, map, switchMap, BehaviorSubject, of, forkJoin } from 'rxjs'
             <div class="info-group" *ngIf="items[0].vendedor">
               <label>Atendido por</label>
               <div class="value">
-                <span class="vendedor-badge">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                  </svg>
-                  {{ items[0].vendedor }}
-                </span>
+                <app-vendedor-badge [vendedor]="items[0].vendedor"></app-vendedor-badge>
               </div>
             </div>
           </div>
@@ -62,42 +66,27 @@ import { Observable, map, switchMap, BehaviorSubject, of, forkJoin } from 'rxjs'
             </div>
           </div>
 
-          <div class="notes-section">
-            <div class="note-box tienda" *ngIf="items[0].notasTienda">
-              <label>Notas de Tienda</label>
-              <p>{{ items[0].notasTienda }}</p>
-            </div>
-            
-            <div class="note-box pastelero" *ngIf="items[0].notasPastelero">
-              <label>Notas de Obrador</label>
-              <p>{{ items[0].notasPastelero }}</p>
-            </div>
-          </div>
+          <app-pedido-notes
+            [notasTienda]="items[0].notasTienda"
+            [notasPastelero]="items[0].notasPastelero"
+            mode="dual"
+          ></app-pedido-notes>
 
           <!-- Acción de Tienda: Entregar -->
-          <div class="actions">
-            <button 
-              *ngIf="items[0].estado !== 'Entregado'"
-              class="btn-deliver" 
-              (click)="markAsDeliveredGroup(items)" 
-              [disabled]="isUpdating"
-            >
-               {{ isUpdating ? 'Procesando...' : 'ENTREGAR TODO EL PEDIDO' }}
-            </button>
+          <app-pedido-actions
+            [estado]="items[0].estado"
+            mode="tienda"
+            [isUpdating]="isUpdating"
+            (deliver)="markAsDeliveredGroup(items)"
+            (cancel)="cancelOrderGroup(items)"
+          >
             <button 
               class="btn-edit-secondary" 
               [routerLink]="['/pedidos/editar', items[0].id]"
             >
               EDITAR PEDIDO
             </button>
-            <button 
-              *ngIf="items[0].estado !== 'Cancelado' && items[0].estado !== 'Entregado'"
-              class="btn-cancel-secondary" 
-              (click)="cancelOrderGroup(items)"
-            >
-              CANCELAR PEDIDO
-            </button>
-          </div>
+          </app-pedido-actions>
           
           <div class="actions" *ngIf="items[0].estado === 'Entregado'">
              <span class="delivery-success">Entregado correctamente ✓</span>

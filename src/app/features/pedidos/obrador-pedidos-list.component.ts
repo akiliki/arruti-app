@@ -9,11 +9,21 @@ import { Observable, combineLatest, map, startWith, BehaviorSubject, switchMap, 
 import { ObradorTimeSlotGroup, ObradorTallaGroup } from './obrador-pedidos.model';
 import { belongsToFamilia, countByStatus, groupPedidosByTimeSlot, hasInProcess, hasPending, isUrgent } from './obrador-pedidos.utils';
 import { formatDate, isToday } from './pedidos-date.utils';
+import { PedidosHeaderComponent } from '../../shared/components/pedidos-header/pedidos-header.component';
+import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
+import { LoadingStateComponent } from '../../shared/components/loading-state/loading-state.component';
 
 @Component({
   selector: 'app-obrador-pedidos-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    PedidosHeaderComponent,
+    EmptyStateComponent,
+    LoadingStateComponent
+  ],
   templateUrl: './obrador-pedidos-list.component.html',
   styleUrl: './obrador-pedidos-list.component.scss'
 })
@@ -35,7 +45,7 @@ export class ObradorPedidosListComponent implements OnInit {
   
   familiaFilter = new FormControl('');
   productoFilter = new FormControl('');
-  fechaFilter = new FormControl(this.formatDate(new Date()));
+  fechaFilter = new FormControl(formatDate(new Date()));
   selectedTimeSlots: string[] = []; // Array para selección múltiple
   groupByTimeSlot = new FormControl(true);
   

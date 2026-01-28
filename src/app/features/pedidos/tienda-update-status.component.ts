@@ -4,17 +4,16 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProductionService } from '../../core/services/production.service';
 import { Pedido, EstadoPedido } from '../../core/models/pedido.model';
 import { Observable, map, switchMap, catchError, of, take } from 'rxjs';
+import { PedidosHeaderComponent } from '../../shared/components/pedidos-header/pedidos-header.component';
+import { PedidoStatusClassPipe } from '../../shared/pipes/pedido-status-class.pipe';
 
 @Component({
   selector: 'app-tienda-update-status',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, PedidosHeaderComponent, PedidoStatusClassPipe],
   template: `
     <div class="status-container" *ngIf="pedido$ | async as pedido; else loading">
-      <div class="header">
-        <button class="btn-back" routerLink="/pedidos">← Volver</button>
-        <h2>Pedido: {{ pedido.id }}</h2>
-      </div>
+      <app-pedidos-header [title]="'Pedido: ' + pedido.id" backText="← Volver" [backLink]="['/pedidos']"></app-pedidos-header>
 
       <div class="order-card">
         <div class="detail">
@@ -35,7 +34,7 @@ import { Observable, map, switchMap, catchError, of, take } from 'rxjs';
         </div>
         <div class="detail">
           <label>Estado Actual:</label>
-          <span class="badge" [ngClass]="pedido.estado.toLowerCase().replace(' ', '-')">
+          <span class="badge" [ngClass]="pedido.estado | pedidoStatusClass">
             {{ pedido.estado }}
           </span>
         </div>
@@ -46,7 +45,7 @@ import { Observable, map, switchMap, catchError, of, take } from 'rxjs';
         <div class="btn-group">
           <button 
             *ngFor="let estado of estados" 
-            [class]="'btn-status ' + estado.toLowerCase().replace(' ', '-')"
+            [class]="'btn-status ' + (estado | pedidoStatusClass)"
             [class.active]="pedido.estado === estado"
             [disabled]="updating || pedido.estado === estado"
             (click)="updateStatus(pedido.id, estado)"

@@ -4,21 +4,31 @@ import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { ProductionService } from '../../core/services/production.service';
 import { Pedido, EstadoPedido } from '../../core/models/pedido.model';
 import { Observable, map, switchMap, BehaviorSubject } from 'rxjs';
+import { PedidosHeaderComponent } from '../../shared/components/pedidos-header/pedidos-header.component';
+import { VendedorBadgeComponent } from '../../shared/components/vendedor-badge/vendedor-badge.component';
+import { PedidoNotesComponent } from '../../shared/components/pedido-notes/pedido-notes.component';
+import { PedidoActionsComponent } from '../../shared/components/pedido-actions/pedido-actions.component';
+import { PedidoStatusClassPipe } from '../../shared/pipes/pedido-status-class.pipe';
 
 @Component({
   selector: 'app-obrador-pedido-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    PedidosHeaderComponent,
+    VendedorBadgeComponent,
+    PedidoNotesComponent,
+    PedidoActionsComponent,
+    PedidoStatusClassPipe
+  ],
   template: `
     <div class="detail-container">
-      <div class="header">
-        <button class="btn-back" (click)="goBack()">← Volver a Obrador</button>
-        <h2>Control de Producción</h2>
-      </div>
+      <app-pedidos-header title="Control de Producción" backText="← Volver a Obrador" (back)="goBack()"></app-pedidos-header>
 
       <div *ngIf="pedido$ | async as pedido; else loading" class="content">
         <div class="card">
-          <div class="status-banner" [ngClass]="pedido.estado.toLowerCase().replace(' ', '-')">
+          <div class="status-banner" [ngClass]="pedido.estado | pedidoStatusClass">
             Estado Actual: {{ pedido.estado }}
           </div>
 
@@ -45,59 +55,34 @@ import { Observable, map, switchMap, BehaviorSubject } from 'rxjs';
             <div class="info-group" *ngIf="pedido.vendedor">
               <label>Atendido por</label>
               <div class="value">
-                <span class="vendedor-badge">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                  </svg>
-                  {{ pedido.vendedor }}
-                </span>
+                <app-vendedor-badge [vendedor]="pedido.vendedor"></app-vendedor-badge>
               </div>
             </div>
           </div>
-
-          <div class="notes-section">
-            <div class="note-box pastelero" *ngIf="pedido.notasPastelero">
-              <label>Instrucciones de Obrador</label>
-              <p>{{ pedido.notasPastelero }}</p>
-            </div>
-            
-            <div class="note-box tienda" *ngIf="pedido.notasTienda">
-              <label>Comentario de Tienda</label>
-              <p>{{ pedido.notasTienda }}</p>
-            </div>
-          </div>
+          <app-pedido-notes
+            [notasPastelero]="pedido.notasPastelero"
+            [notasTienda]="pedido.notasTienda"
+            mode="dual"
+            pasteleroLabel="Instrucciones de Obrador"
+            tiendaLabel="Comentario de Tienda"
+          ></app-pedido-notes>
 
           <!-- Acciones de Obrador: Empezar / Terminar -->
-          <div class="production-actions">
-            <button *ngIf="pedido.estado === 'Pendiente'" 
-                    class="btn-action start" 
-                    (click)="updateStatus(pedido.id, 'En Proceso')"
-                    [disabled]="isUpdating">
-              {{ isUpdating ? 'Actualizando...' : 'COMENZAR PRODUCCIÓN' }}
-            </button>
-            
-            <button *ngIf="pedido.estado === 'En Proceso'" 
-                    class="btn-action finish" 
-                    (click)="updateStatus(pedido.id, 'Terminado')"
-                    [disabled]="isUpdating">
-              {{ isUpdating ? 'Actualizando...' : 'TERMINAR Y LISTO PARA TIENDA' }}
-            </button>
+          <app-pedido-actions
+            [estado]="pedido.estado"
+            mode="obrador"
+            [isUpdating]="isUpdating"
+            (start)="updateStatus(pedido.id, 'En Proceso')"
+            (finish)="updateStatus(pedido.id, 'Terminado')"
+            (cancel)="cancelarPedido(pedido)"
+          ></app-pedido-actions>
 
-            <button *ngIf="pedido.estado === 'Pendiente' || pedido.estado === 'En Proceso'"
-                    class="btn-cancel-link"
-                    (click)="cancelarPedido(pedido)"
-                    [disabled]="isUpdating">
-              CANCELAR ESTA PIEZA
-            </button>
-
-            <div class="done-message" *ngIf="pedido.estado === 'Terminado' || pedido.estado === 'Entregado'">
-               Pedido finalizado por obrador ✓
-            </div>
-            
-            <div class="cancelled-message" *ngIf="pedido.estado === 'Cancelado'">
-               ESTE PEDIDO HA SIDO CANCELADO
-            </div>
+          <div class="done-message" *ngIf="pedido.estado === 'Terminado' || pedido.estado === 'Entregado'">
+             Pedido finalizado por obrador ✓
+          </div>
+          
+          <div class="cancelled-message" *ngIf="pedido.estado === 'Cancelado'">
+             ESTE PEDIDO HA SIDO CANCELADO
           </div>
 
           <div class="metadata">

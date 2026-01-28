@@ -27,7 +27,7 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith, of, ta
 
       <form [formGroup]="pedidoForm" (ngSubmit)="onSubmit()" class="responsive-grid">
         <!-- Empleado - AHORA LO PRIMERO -->
-        <div class="form-card employee-card" *ngIf="!pedidoForm.get('vendedor')?.value">
+        <div class="form-card employee-card full-width" *ngIf="!pedidoForm.get('vendedor')?.value">
           <div class="form-group">
             <label>¿Quién recoge el pedido? (Empleado)</label>
             <div class="quick-chips">
@@ -43,13 +43,13 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith, of, ta
           </div>
         </div>
 
-        <div class="selected-vendedor-info" *ngIf="pedidoForm.get('vendedor')?.value" (click)="pedidoForm.get('vendedor')?.setValue('')">
+        <div class="selected-vendedor-info full-width" *ngIf="pedidoForm.get('vendedor')?.value" (click)="pedidoForm.get('vendedor')?.setValue('')">
           Atendido por: <strong>{{ pedidoForm.get('vendedor')?.value }}</strong>
           <span class="change-link">(Cambiar)</span>
         </div>
 
         <!-- Resumen de Productos (Table) - AHORA ARRIBA -->
-        <div class="form-card summary-card-top" *ngIf="hasConfirmedItems() || isEditMode">
+        <div class="form-card summary-card-top full-width" *ngIf="hasConfirmedItems() || isEditMode">
           <div class="items-header">
             <h3>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -114,7 +114,7 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith, of, ta
         </div>
 
         <!-- Columna Izquierda: Entrada de Productos -->
-        <div class="column">
+        <div class="column product-column">
           <div formArrayName="items" class="active-items-list">
             <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i">
               <div class="product-item-row" *ngIf="!confirmedLines[i]">
@@ -253,7 +253,7 @@ import { Observable, tap, BehaviorSubject, combineLatest, map, startWith, of, ta
         </div>
 
         <!-- Columna Derecha: Entrega y Cliente -->
-        <div class="column" *ngIf="showDeliveryFields || isEditMode">
+        <div class="column delivery-column" *ngIf="showDeliveryFields || isEditMode">
           <div class="form-card" id="delivery-section">
             <h3 class="delivery-header">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

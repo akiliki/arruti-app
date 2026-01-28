@@ -7,18 +7,32 @@ import { Pedido, EstadoPedido } from '../../core/models/pedido.model';
 import { Observable, combineLatest, map, startWith } from 'rxjs';
 import { formatDate, isToday } from './pedidos-date.utils';
 import { filterAndGroupTiendaPedidos } from './tienda-pedidos-list.utils';
+import { PedidosHeaderComponent } from '../../shared/components/pedidos-header/pedidos-header.component';
+import { PedidoStatusBadgeComponent } from '../../shared/components/pedido-status-badge/pedido-status-badge.component';
+import { VendedorBadgeComponent } from '../../shared/components/vendedor-badge/vendedor-badge.component';
+import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
+import { LoadingStateComponent } from '../../shared/components/loading-state/loading-state.component';
 
 @Component({
   selector: 'app-tienda-pedidos-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    PedidosHeaderComponent,
+    PedidoStatusBadgeComponent,
+    VendedorBadgeComponent,
+    EmptyStateComponent,
+    LoadingStateComponent
+  ],
   templateUrl: './tienda-pedidos-list.component.html',
   styleUrl: './tienda-pedidos-list.component.scss'
 })
 export class TiendaPedidosListComponent implements OnInit {
   private productionService = inject(ProductionService);
 
-  estadoFilter = new FormControl('');
+  estadoFilter = new FormControl<EstadoPedido | ''>('', { nonNullable: true });
   productoFilter = new FormControl('');
   fechaFilter = new FormControl(formatDate(new Date()));
   nombreFilter = new FormControl('');

@@ -1,7 +1,6 @@
 <div class="obrador-container">
-  <div class="header">
-    <h2>Producción de Obrador</h2>
-    <div class="header-actions">
+  <app-pedidos-header title="Producción de Obrador">
+    <div header-actions class="header-actions">
       <div class="threshold-wrapper">
         <span class="threshold-label">Alertas próximas:</span>
         <select class="threshold-select" [value]="upcomingThresholdHours" (change)="changeThreshold(+$any($event.target).value)">
@@ -16,7 +15,7 @@
         Auto-refresh 30s
       </div>
     </div>
-  </div>
+  </app-pedidos-header>
 
   <div class="quick-filters">
     <div class="main-filter-row">
@@ -340,12 +339,10 @@
       </div>
     </ng-container>
 
-    <div *ngIf="groups.length === 0" class="empty-state">
-      No hay productos pendientes de producir.
-    </div>
+    <app-empty-state title="No hay productos pendientes de producir."></app-empty-state>
   </div>
 
   <ng-template #loading>
-    <div class="loading-state">Cargando producción...</div>
+    <app-loading-state text="Cargando producción..."></app-loading-state>
   </ng-template>
 </div>
