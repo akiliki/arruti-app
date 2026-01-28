@@ -1,1 +1,0 @@
-import{aa as t}from"./chunk-KPOQCY7D.js";var i=class r{transform(e){return e?String(e).toLowerCase().replace(/\s+/g,"-"):""}static \u0275fac=function(n){return new(n||r)};static \u0275pipe=t({name:"pedidoStatusClass",type:r,pure:!0,standalone:!0})};export{i as a};
