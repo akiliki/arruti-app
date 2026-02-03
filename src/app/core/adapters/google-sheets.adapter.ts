@@ -151,9 +151,19 @@ export class GoogleSheetsAdapter {
       }
 
       let productosAsociados: any[] = [];
+      let legacyIdProducto = item.id_producto;
+      let legacyNombreProducto = item.nombre_producto;
+      let legacyRaciones = item.raciones;
+
       try {
         if (item.id_producto && String(item.id_producto).startsWith('[')) {
           productosAsociados = JSON.parse(String(item.id_producto));
+          // Para retrocompatibilidad, extraemos el primer producto si existe
+          if (productosAsociados.length > 0) {
+            legacyIdProducto = productosAsociados[0].idProducto;
+            legacyNombreProducto = productosAsociados[0].nombreProducto;
+            legacyRaciones = productosAsociados[0].raciones;
+          }
         } else if (item.id_producto) {
           // Retrocompatibilidad: si no es un JSON, es un ID único
           productosAsociados = [{
@@ -174,7 +184,13 @@ export class GoogleSheetsAdapter {
         if (parts.length >= 1) {
           cantidadPesada = parseFloat(parts[0]) || 0;
           if (parts.length >= 2) {
-            unidadPesada = parts[1];
+            const unit = parts[1].toLowerCase();
+            // Validar que la unidad sea una de las permitidas por el modelo
+            if (['gr', 'kg', 'ml', 'l', 'ud'].includes(unit)) {
+              unidadPesada = unit;
+            } else {
+              unidadPesada = 'ud';
+            }
           }
         }
       }
@@ -188,10 +204,10 @@ export class GoogleSheetsAdapter {
         pasos: item.pasos,
         tiempoTotal: item.tiempo_total,
         productosAsociados,
-        // Mantener campos antiguos para compatibilidad si algún componente los usa
-        idProducto: item.id_producto,
-        nombreProducto: item.nombre_producto,
-        raciones: item.raciones
+        // Mantener campos antiguos corregidos para que no tengan JSON
+        idProducto: legacyIdProducto,
+        nombreProducto: legacyNombreProducto,
+        raciones: legacyRaciones
       };
     });
   }

@@ -35,78 +35,86 @@ import { catchError, of, take } from 'rxjs';
         </div>
 
         <form [formGroup]="recetaForm" (ngSubmit)="onSubmit()">
-          <div class="form-group">
-            <label for="nombre">Nombre de la Receta</label>
-            <input id="nombre" type="text" formControlName="nombre" placeholder="Ej: Masa de Bizcocho">
+          <div class="main-fields">
+            <div class="form-group">
+              <label for="nombre">Nombre de la Receta</label>
+              <input id="nombre" type="text" formControlName="nombre" placeholder="Ej: Masa de Bizcocho">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="cantidadPesada">Cantidad Pesada</label>
+                <input id="cantidadPesada" type="number" formControlName="cantidadPesada" placeholder="500">
+              </div>
+              <div class="form-group">
+                <label for="unidadPesada">Unidad</label>
+                <select id="unidadPesada" formControlName="unidadPesada">
+                  <option value="gr">gr</option>
+                  <option value="kg">kg</option>
+                  <option value="ml">ml</option>
+                  <option value="l">l</option>
+                  <option value="ud">ud</option>
+                </select>
+              </div>
+            </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="cantidadPesada">Cantidad Pesada</label>
-              <input id="cantidadPesada" type="number" formControlName="cantidadPesada" placeholder="Ej: 500">
-            </div>
-            <div class="form-group">
-              <label for="unidadPesada">Unidad</label>
-              <select id="unidadPesada" formControlName="unidadPesada">
-                <option value="gr">gr</option>
-                <option value="kg">kg</option>
-                <option value="ml">ml</option>
-                <option value="l">l</option>
-                <option value="ud">ud</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Productos que se producen con esta receta</label>
-            <div formArrayName="productosAsociados" class="products-table-wrapper">
-              <table class="ingredients-table">
+          <div class="section-container">
+            <h3 class="section-title">Productos Relacionados</h3>
+            <p class="section-desc">Indica qué productos se elaboran con esta receta y raciones estimadas.</p>
+            
+            <div formArrayName="productosAsociados" class="table-card">
+              <table class="form-table">
                 <thead>
                   <tr>
                     <th>Producto</th>
                     <th>Raciones que produce</th>
-                    <th></th>
+                    <th class="col-actions"></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let pAsoc of productosAsociados.controls; let i = index" [formGroupName]="i">
                     <td>
                       <select formControlName="idProducto" (change)="onProductoAsociadoChange(i)">
+                        <option value="" disabled>Seleccionar producto...</option>
                         <option *ngFor="let p of allProductos" [value]="p.id">{{ p.producto }} ({{ p.familia }})</option>
                       </select>
                     </td>
                     <td>
-                      <input type="text" formControlName="raciones" placeholder="Ej: 12 induviduales, 2 de 8p...">
+                      <input type="text" formControlName="raciones" placeholder="Ej: 12 individuales, 2 de 8p...">
                     </td>
                     <td>
-                      <button type="button" class="btn-remove-ing" (click)="removeProductoAsociado(i)">×</button>
+                      <button type="button" class="btn-icon-remove" (click)="removeProductoAsociado(i)" title="Eliminar asociación">×</button>
                     </td>
                   </tr>
                 </tbody>
               </table>
-              <button type="button" class="btn-add-ing" (click)="addProductoAsociado()">+ Asociar otro producto</button>
+              <button type="button" class="btn-add-row" (click)="addProductoAsociado()">
+                <span class="plus">+</span> Asociar otro producto
+              </button>
             </div>
           </div>
 
-          <div class="form-group">
-            <label>Ingredientes</label>
-            <div formArrayName="ingredientes" class="ingredients-table-wrapper">
-              <table class="ingredients-table">
+          <div class="section-container">
+            <h3 class="section-title">Ingredientes</h3>
+            
+            <div formArrayName="ingredientes" class="table-card">
+              <table class="form-table">
                 <thead>
                   <tr>
                     <th>Ingrediente</th>
-                    <th>Cant.</th>
-                    <th>Unidad</th>
-                    <th></th>
+                    <th style="width: 15%">Cant.</th>
+                    <th style="width: 20%">Unidad</th>
+                    <th class="col-actions"></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let ing of ingredientes.controls; let i = index" [formGroupName]="i">
                     <td>
-                      <input type="text" formControlName="nombre" placeholder="Harina, Azúcar...">
+                      <input type="text" formControlName="nombre" placeholder="Nombre ingrediente...">
                     </td>
                     <td>
-                      <input type="text" formControlName="cantidad" placeholder="500">
+                      <input type="text" formControlName="cantidad" placeholder="0">
                     </td>
                     <td>
                       <select formControlName="unidad">
@@ -119,12 +127,14 @@ import { catchError, of, take } from 'rxjs';
                       </select>
                     </td>
                     <td>
-                      <button type="button" class="btn-remove-ing" (click)="removeIngrediente(i)">×</button>
+                      <button type="button" class="btn-icon-remove" (click)="removeIngrediente(i)" title="Eliminar ingrediente">×</button>
                     </td>
                   </tr>
                 </tbody>
               </table>
-              <button type="button" class="btn-add-ing" (click)="addIngrediente()">+ Añadir Ingrediente</button>
+              <button type="button" class="btn-add-row" (click)="addIngrediente()">
+                <span class="plus">+</span> Añadir Ingrediente
+              </button>
             </div>
           </div>
 
@@ -148,7 +158,7 @@ import { catchError, of, take } from 'rxjs';
       </div>
     </div>
   `,
-  styleUrls: ['./receta-form.component.scss']
+  styleUrl: './receta-form.component.scss'
 })
 export class RecetaFormComponent implements OnInit {
   private fb = inject(FormBuilder);

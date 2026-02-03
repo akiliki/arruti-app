@@ -29,23 +29,30 @@ import { Observable, map, switchMap, of } from 'rxjs';
               <span class="highlight">{{ r.cantidadPesada }} {{ r.unidadPesada }}</span>
             </div>
             <div class="meta-item">
-              <label>Tiempo Total</label>
-              <span>⏱ {{ r.tiempoTotal }}</span>
+              <label>Tiempo de Elaboración</label>
+              <span class="highlight">⏱ {{ r.tiempoTotal }}</span>
             </div>
           </div>
 
           <section class="section">
-            <h3>Productos Producidos</h3>
-            <div class="asoc-products">
-              <div *ngFor="let p of r.productosAsociados" class="asoc-item">
-                <span class="p-name">{{ p.nombreProducto }}</span>
-                <span class="p-raciones">Raciones: {{ p.raciones }}</span>
-                <button class="btn-link-prod" [routerLink]="['/productos', p.idProducto]">Ver Producto</button>
+            <div class="section-header-styled">
+              <h3>Productos Producidos</h3>
+              <span class="helper-text">Rendimiento según formato de producto</span>
+            </div>
+            <div class="asoc-products-grid">
+              <div *ngFor="let p of r.productosAsociados" class="asoc-card">
+                <div class="asoc-info">
+                  <span class="p-name">{{ p.nombreProducto }}</span>
+                  <span class="p-raciones">{{ p.raciones }}</span>
+                </div>
+                <button class="btn-link-action" [routerLink]="['/productos', p.idProducto]">Ver Producto →</button>
               </div>
-              <div *ngIf="!r.productosAsociados || r.productosAsociados.length === 0" class="asoc-item">
-                 <span class="p-name">{{ r.nombreProducto }}</span>
-                 <span class="p-raciones">Raciones: {{ r.raciones }}</span>
-                 <button class="btn-link-prod" [routerLink]="['/productos', r.idProducto]">Ver Producto</button>
+              <div *ngIf="(!r.productosAsociados || r.productosAsociados.length === 0) && r.nombreProducto" class="asoc-card">
+                 <div class="asoc-info">
+                  <span class="p-name">{{ r.nombreProducto }}</span>
+                  <span class="p-raciones">{{ r.raciones }}</span>
+                 </div>
+                 <button class="btn-link-action" [routerLink]="['/productos', r.idProducto]">Ver Producto →</button>
               </div>
             </div>
           </section>
@@ -110,11 +117,17 @@ import { Observable, map, switchMap, of } from 'rxjs';
     .ing-table th { text-align: left; padding: 0.75rem 1rem; background: #f1f5f9; color: #64748b; font-size: 0.85rem; }
     .ing-table td { padding: 0.75rem 1rem; border-top: 1px solid #e2e8f0; color: #475569; }
 
-    .asoc-products { display: flex; flex-direction: column; gap: 0.5rem; }
-    .asoc-item { display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
-    .p-name { font-weight: 600; color: #1e293b; min-width: 200px; }
-    .p-raciones { color: #64748b; font-size: 0.9rem; flex-grow: 1; }
-    .btn-link-prod { background: none; border: none; color: #3b82f6; cursor: pointer; font-size: 0.85rem; font-weight: 600; text-decoration: underline; }
+    .section-header-styled { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1rem; border-left: 4px solid #3b82f6; padding-left: 0.75rem; }
+    .section-header-styled h3 { font-size: 1.1rem; color: #1e293b; margin: 0; }
+    .helper-text { font-size: 0.8rem; color: #94a3b8; font-weight: 500; text-transform: uppercase; }
+
+    .asoc-products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .asoc-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; transition: transform 0.2s; }
+    .asoc-card:hover { transform: translateY(-2px); border-color: #3b82f6; }
+    .asoc-info { display: flex; flex-direction: column; gap: 0.25rem; }
+    .p-name { font-weight: 700; color: #1e293b; font-size: 1rem; }
+    .p-raciones { color: #3b82f6; font-size: 0.9rem; font-weight: 600; background: #eff6ff; padding: 0.25rem 0.5rem; border-radius: 6px; display: inline-block; width: fit-content; }
+    .btn-link-action { background: none; border: none; color: #64748b; cursor: pointer; font-size: 0.85rem; font-weight: 600; text-align: left; padding: 0; width: fit-content; &:hover { color: #3b82f6; } }
 
     .steps-box { white-space: pre-wrap; line-height: 1.7; color: #334155; background: #fff; border: 1px solid #f1f5f9; padding: 1.5rem; border-radius: 8px; }
 

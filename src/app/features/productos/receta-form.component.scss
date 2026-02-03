@@ -1,8 +1,6 @@
-@import '../../../styles.scss';
-
 .page-container {
-  padding: 1.5rem;
-  max-width: 800px;
+  padding: 2rem;
+  max-width: 900px;
   margin: 0 auto;
 }
 
@@ -11,135 +9,211 @@
   align-items: center;
   gap: 1rem;
   margin-bottom: 2rem;
-
-  h2 { margin: 0; color: #1e293b; }
+  h2 { margin: 0; color: #1e293b; font-size: 1.75rem; font-weight: 800; }
 }
 
 .btn-back {
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 1.2rem;
   background: white;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   color: #64748b;
-  font-weight: 500;
-  &:hover { background: #f8fafc; }
+  font-weight: 600;
+  transition: all 0.2s;
+  &:hover { background: #f8fafc; border-color: #cbd5e1; }
 }
 
 .card {
   background: white;
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 2.5rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f1f5f9;
+}
+
+.product-info {
+  margin-bottom: 2.5rem;
+  padding: 1.25rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border-left: 5px solid #3b82f6;
+  
+  h3 { margin: 0; color: #1e293b; font-size: 1.2rem; }
+  .subtitle { margin: 0.25rem 0 0; color: #64748b; font-size: 0.95rem; font-weight: 500; }
+}
+
+.main-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 
   label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #475569;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
   }
 
   input, select, textarea {
-    width: 100%;
-    padding: 0.75rem;
+    padding: 0.8rem 1rem;
     border: 2px solid #e2e8f0;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 1rem;
+    color: #1e293b;
+    background: white;
+    transition: all 0.2s;
     &:focus {
       outline: none;
       border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
     }
   }
 
-  textarea {
-    resize: vertical;
-    min-height: 120px;
+  textarea { min-height: 140px; resize: vertical; line-height: 1.6; }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.section-container {
+  margin-top: 3.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  color: #1e293b;
+  font-weight: 800;
+  margin: 0 0 0.5rem 0;
+}
+
+.section-desc {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin: 0 0 1.5rem 0;
+}
+
+.table-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1rem;
+}
+
+.form-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+
+  th {
+    text-align: left;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+  }
+
+  td {
+    padding: 0.5rem;
+    vertical-align: middle;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    background: white;
+    &:focus { border-color: #3b82f6; outline: none; }
   }
 }
 
-.ingredients-table-wrapper {
-  background: #f8fafc;
-  padding: 1rem;
+.col-actions { width: 50px; }
+
+.btn-icon-remove {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #fee2e2;
+  background: white;
+  color: #ef4444;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  &:hover { background: #fee2e2; border-color: #fecaca; }
+}
+
+.btn-add-row {
+  width: 100%;
+  padding: 0.85rem;
+  background: white;
+  color: #3b82f6;
+  border: 2px dashed #bfdbfe;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
-
-  .ingredients-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 1rem;
-
-    th { text-align: left; font-size: 0.75rem; text-transform: uppercase; color: #64748b; padding: 0.5rem; }
-    td { padding: 0.25rem 0.5rem; }
-    
-    input, select { padding: 0.5rem; border-width: 1px; border-radius: 6px; }
-  }
-
-  .btn-remove-ing {
-    background: #fee2e2;
-    color: #ef4444;
-    border: none;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-weight: bold;
-    &:hover { background: #fecaca; }
-  }
-
-  .btn-add-ing {
-    width: 100%;
-    padding: 0.6rem;
-    background: white;
-    color: #3b82f6;
-    border: 1px dashed #3b82f6;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    &:hover { background: #eff6ff; }
-  }
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  &:hover { background: #eff6ff; border-color: #3b82f6; }
+  .plus { font-size: 1.25rem; }
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #f1f5f9;
+  gap: 1.5rem;
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 2px solid #f1f5f9;
 }
 
 .btn-cancel {
-  padding: 0.75rem 1.5rem;
+  padding: 0.8rem 2rem;
   background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  color: #64748b;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 0.2s;
+  &:hover { background: #f8fafc; border-color: #cbd5e1; }
 }
 
 .btn-save {
-  padding: 0.75rem 2rem;
+  padding: 0.8rem 2.5rem;
   background: #3b82f6;
   color: white;
   border: none;
-  border-radius: 10px;
-  font-weight: 600;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
   cursor: pointer;
-  &:disabled {
-    background: #94a3b8;
-    cursor: not-allowed;
-  }
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);
+  transition: all 0.2s;
+  &:hover:not(:disabled) { background: #2563eb; transform: translateY(-1px); }
+  &:disabled { background: #94a3b8; cursor: not-allowed; box-shadow: none; }
 }
 
-.loading, .error {
-  text-align: center;
-  padding: 3rem;
-  color: #64748b;
-}
-
-.error-text {
-  color: #ef4444;
-}
+.loading, .error { text-align: center; padding: 4rem; color: #64748b; }
+.error-text { color: #ef4444; font-weight: 700; margin-bottom: 1.5rem; }

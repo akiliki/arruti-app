@@ -1,15 +1,6 @@
 <div class="obrador-container">
   <app-pedidos-header title="Producción de Obrador">
     <div header-actions class="header-actions">
-      <div class="threshold-wrapper">
-        <span class="threshold-label">Alertas próximas:</span>
-        <select class="threshold-select" [value]="upcomingThresholdHours" (change)="changeThreshold(+$any($event.target).value)">
-          <option [value]="2">2h</option>
-          <option [value]="4">4h</option>
-          <option [value]="8">8h</option>
-          <option [value]="24">24h</option>
-        </select>
-      </div>
       <div class="auto-refresh">
         <span class="dot" [class.active]="isRefreshing"></span>
         Auto-refresh 30s
@@ -61,6 +52,16 @@
 
     <div class="extra-filters" *ngIf="showFilters">
       <div class="filter-group">
+        <label>Alertas Próximas (Tiempo)</label>
+        <select [value]="upcomingThresholdHours" (change)="changeThreshold(+$any($event.target).value)">
+          <option [value]="2">Próximas 2 horas</option>
+          <option [value]="4">Próximas 4 horas</option>
+          <option [value]="8">Próximas 8 horas</option>
+          <option [value]="24">Próximas 24 horas</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
         <label>Nombre del producto</label>
         <input type="text" [formControl]="productoFilter" placeholder="Ej: Croissant, Tarta...">
       </div>
@@ -72,36 +73,30 @@
           <option *ngFor="let f of familias$ | async" [value]="f">{{f}}</option>
         </select>
       </div>
-      
-      <div class="filter-group">
-        <label>Filtrar por Estado</label>
-        <div class="mini-status-chips" *ngIf="counts$ | async as counts">
-          <button class="mini-chip" [class.active]="isStatusActive('Pendiente')" (click)="toggleStatus('Pendiente')">
-            <span class="dot red"></span> Pendiente ({{counts.falta}})
-          </button>
-          <button class="mini-chip" [class.active]="isStatusActive('En Proceso')" (click)="toggleStatus('En Proceso')">
-            <span class="dot blue"></span> En curso ({{counts.enCurso}})
-          </button>
-          <button class="mini-chip" [class.active]="isStatusActive('Terminado')" (click)="toggleStatus('Terminado')">
-            <span class="dot green"></span> Terminado ({{counts.terminado}})
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 
-  <div class="status-summary-bar" *ngIf="!showFilters">
+  <div class="status-summary-bar" *ngIf="showFilters">
     <div class="status-chips-inline" *ngIf="counts$ | async as counts">
-      <div class="status-item" [class.active]="isStatusActive('Pendiente')" (click)="toggleStatus('Pendiente')">
-        <span class="indicator red"></span>
+      <div class="status-item" 
+           [class.active]="isStatusActive('Pendiente')" 
+           [class.pending]="isStatusActive('Pendiente')"
+           (click)="toggleStatus('Pendiente')">
+        <span class="indicator"></span>
         <strong>{{counts.falta}}</strong> Pendientes
       </div>
-      <div class="status-item" [class.active]="isStatusActive('En Proceso')" (click)="toggleStatus('En Proceso')">
-        <span class="indicator blue"></span>
+      <div class="status-item" 
+           [class.active]="isStatusActive('En Proceso')" 
+           [class.in-process]="isStatusActive('En Proceso')"
+           (click)="toggleStatus('En Proceso')">
+        <span class="indicator"></span>
         <strong>{{counts.enCurso}}</strong> En curso
       </div>
-      <div class="status-item" [class.active]="isStatusActive('Terminado')" (click)="toggleStatus('Terminado')">
-        <span class="indicator green"></span>
+      <div class="status-item" 
+           [class.active]="isStatusActive('Terminado')" 
+           [class.finished]="isStatusActive('Terminado')"
+           (click)="toggleStatus('Terminado')">
+        <span class="indicator"></span>
         <strong>{{counts.terminado}}</strong> hechos
       </div>
     </div>
@@ -110,7 +105,7 @@
   <ng-container *ngIf="upcomingPedidos$ | async as upcoming">
     <div class="alerts-section" *ngIf="upcoming.length > 0">
       <div class="alert-header" (click)="showUpcomingList = !showUpcomingList">
-        <span class="alert-icon">⚠️</span>
+        <span class="alert-icon">🔔</span>
         <h3>Pedidos próximos sin empezar ({{ upcoming.length }})</h3>
         <span class="chevron">{{ showUpcomingList ? '▼' : '▶' }}</span>
       </div>
@@ -339,7 +334,7 @@
       </div>
     </ng-container>
 
-    <app-empty-state title="No hay productos pendientes de producir."></app-empty-state>
+    <app-empty-state *ngIf="groups.length === 0" title="No hay productos pendientes de producir."></app-empty-state>
   </div>
 
   <ng-template #loading>
