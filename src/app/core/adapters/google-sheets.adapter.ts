@@ -150,14 +150,48 @@ export class GoogleSheetsAdapter {
         ingredientes = [{ nombre: String(item.ingredientes), cantidad: '', unidad: '' }];
       }
 
+      let productosAsociados: any[] = [];
+      try {
+        if (item.id_producto && String(item.id_producto).startsWith('[')) {
+          productosAsociados = JSON.parse(String(item.id_producto));
+        } else if (item.id_producto) {
+          // Retrocompatibilidad: si no es un JSON, es un ID único
+          productosAsociados = [{
+            idProducto: item.id_producto,
+            nombreProducto: item.nombre_producto,
+            raciones: item.raciones
+          }];
+        }
+      } catch (e) {
+        productosAsociados = [];
+      }
+
+      // Parsear raciones como pesada: "500 gr" -> cantidad: 500, unidad: gr
+      let cantidadPesada = 0;
+      let unidadPesada: any = 'gr';
+      if (item.raciones) {
+        const parts = String(item.raciones).trim().split(' ');
+        if (parts.length >= 1) {
+          cantidadPesada = parseFloat(parts[0]) || 0;
+          if (parts.length >= 2) {
+            unidadPesada = parts[1];
+          }
+        }
+      }
+
       return {
         id: item.id,
-        idProducto: item.id_producto,
-        nombreProducto: item.nombre_producto,
-        raciones: item.raciones,
+        nombre: item.nombre_producto,
+        cantidadPesada,
+        unidadPesada,
         ingredientes: ingredientes,
         pasos: item.pasos,
-        tiempoTotal: item.tiempo_total
+        tiempoTotal: item.tiempo_total,
+        productosAsociados,
+        // Mantener campos antiguos para compatibilidad si algún componente los usa
+        idProducto: item.id_producto,
+        nombreProducto: item.nombre_producto,
+        raciones: item.raciones
       };
     });
   }
@@ -180,9 +214,9 @@ export class GoogleSheetsAdapter {
   prepareRecetaForPost(receta: Receta): any {
     return {
       id: receta.id,
-      id_producto: receta.idProducto,
-      nombre_producto: receta.nombreProducto,
-      raciones: receta.raciones,
+      id_producto: JSON.stringify(receta.productosAsociados || []),
+      nombre_producto: receta.nombre,
+      raciones: `${receta.cantidadPesada} ${receta.unidadPesada}`,
       ingredientes: JSON.stringify(receta.ingredientes),
       pasos: receta.pasos,
       tiempo_total: receta.tiempoTotal

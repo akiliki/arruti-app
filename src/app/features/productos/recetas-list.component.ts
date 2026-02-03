@@ -12,8 +12,9 @@ import { Receta } from '../../core/models/receta.model';
       <table class="main-table">
         <thead>
           <tr>
-            <th *ngIf="showProductColumn">Producto</th>
-            <th>Raciones</th>
+            <th>Receta</th>
+            <th *ngIf="showProductColumn">Productos Asoc.</th>
+            <th>Pesada</th>
             <th>Tiempo</th>
             <th>Resumen Ingredientes</th>
             <th>Acciones</th>
@@ -21,8 +22,16 @@ import { Receta } from '../../core/models/receta.model';
         </thead>
         <tbody>
           <tr *ngFor="let r of recetas">
-            <td *ngIf="showProductColumn" class="bold">{{ r.nombreProducto }}</td>
-            <td>{{ r.raciones }}</td>
+            <td class="bold">{{ r.nombre || r.nombreProducto }}</td>
+            <td *ngIf="showProductColumn">
+              <div class="asoc-p-list">
+                <span *ngFor="let p of r.productosAsociados" class="p-tag">{{ p.nombreProducto }}</span>
+                <span *ngIf="(!r.productosAsociados || r.productosAsociados.length === 0) && r.nombreProducto" class="p-tag">
+                  {{ r.nombreProducto }}
+                </span>
+              </div>
+            </td>
+            <td>{{ r.cantidadPesada }} {{ r.unidadPesada }}</td>
             <td><span class="time-tag">⏱ {{ r.tiempoTotal }}</span></td>
             <td>
               <div class="ing-pill-list">

@@ -36,12 +36,56 @@ import { catchError, of, take } from 'rxjs';
 
         <form [formGroup]="recetaForm" (ngSubmit)="onSubmit()">
           <div class="form-group">
-            <label for="raciones">Tamaño / Raciones</label>
-            <select id="raciones" formControlName="raciones">
-              <option value="">Seleccionar tamaño...</option>
-              <option *ngFor="let t of producto.tallasRaciones" [value]="t">{{ t }}</option>
-              <option value="General">General (Todas las tallas)</option>
-            </select>
+            <label for="nombre">Nombre de la Receta</label>
+            <input id="nombre" type="text" formControlName="nombre" placeholder="Ej: Masa de Bizcocho">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cantidadPesada">Cantidad Pesada</label>
+              <input id="cantidadPesada" type="number" formControlName="cantidadPesada" placeholder="Ej: 500">
+            </div>
+            <div class="form-group">
+              <label for="unidadPesada">Unidad</label>
+              <select id="unidadPesada" formControlName="unidadPesada">
+                <option value="gr">gr</option>
+                <option value="kg">kg</option>
+                <option value="ml">ml</option>
+                <option value="l">l</option>
+                <option value="ud">ud</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Productos que se producen con esta receta</label>
+            <div formArrayName="productosAsociados" class="products-table-wrapper">
+              <table class="ingredients-table">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Raciones que produce</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let pAsoc of productosAsociados.controls; let i = index" [formGroupName]="i">
+                    <td>
+                      <select formControlName="idProducto" (change)="onProductoAsociadoChange(i)">
+                        <option *ngFor="let p of allProductos" [value]="p.id">{{ p.producto }} ({{ p.familia }})</option>
+                      </select>
+                    </td>
+                    <td>
+                      <input type="text" formControlName="raciones" placeholder="Ej: 12 induviduales, 2 de 8p...">
+                    </td>
+                    <td>
+                      <button type="button" class="btn-remove-ing" (click)="removeProductoAsociado(i)">×</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <button type="button" class="btn-add-ing" (click)="addProductoAsociado()">+ Asociar otro producto</button>
+            </div>
           </div>
 
           <div class="form-group">
@@ -117,13 +161,17 @@ export class RecetaFormComponent implements OnInit {
   recetaForm: FormGroup;
   isEditMode = false;
   producto?: Producto;
+  allProductos: Producto[] = [];
   loading = signal(true);
   saving = signal(false);
   error = signal<string | null>(null);
 
   constructor() {
     this.recetaForm = this.fb.group({
-      raciones: ['', Validators.required],
+      nombre: ['', Validators.required],
+      cantidadPesada: [null, [Validators.required, Validators.min(0)]],
+      unidadPesada: ['gr', Validators.required],
+      productosAsociados: this.fb.array([]),
       ingredientes: this.fb.array([]),
       pasos: ['', Validators.required],
       tiempoTotal: ['', Validators.required]
@@ -132,6 +180,10 @@ export class RecetaFormComponent implements OnInit {
 
   get ingredientes() {
     return this.recetaForm.get('ingredientes') as FormArray;
+  }
+
+  get productosAsociados() {
+    return this.recetaForm.get('productosAsociados') as FormArray;
   }
 
   addIngrediente() {
@@ -147,34 +199,53 @@ export class RecetaFormComponent implements OnInit {
     this.ingredientes.removeAt(index);
   }
 
+  addProductoAsociado(idProducto: string = '', nombreProducto: string = '', raciones: string = '') {
+    const pForm = this.fb.group({
+      idProducto: [idProducto, Validators.required],
+      nombreProducto: [nombreProducto],
+      raciones: [raciones]
+    });
+    this.productosAsociados.push(pForm);
+  }
+
+  removeProductoAsociado(index: number) {
+    this.productosAsociados.removeAt(index);
+  }
+
+  onProductoAsociadoChange(index: number) {
+    const group = this.productosAsociados.at(index) as FormGroup;
+    const id = group.get('idProducto')?.value;
+    const prod = this.allProductos.find(p => p.id === id);
+    if (prod) {
+      group.get('nombreProducto')?.setValue(prod.producto);
+    }
+  }
+
   ngOnInit() {
     const idProducto = this.route.snapshot.paramMap.get('id');
     const idReceta = this.route.snapshot.paramMap.get('idReceta');
-
-    if (!idProducto) {
-      this.error.set('No se proporcionó el ID del producto.');
-      this.loading.set(false);
-      return;
-    }
 
     if (this.ingredientes.length === 0) {
       this.addIngrediente();
     }
 
-    // Cargar producto
+    // Cargar todos los productos para el selector
     this.productoService.getProductos().subscribe(productos => {
+      this.allProductos = productos;
       this.producto = productos.find(p => p.id === idProducto);
       
-      if (!this.producto) {
-        this.error.set('Producto no encontrado.');
-        this.loading.set(false);
-        return;
+      if (!this.producto && idProducto !== 'all') { // 'all' context for general recipes
+        this.error.set('Producto context not found.');
+        // No salimos del todo, permitimos crear si es necesario
       }
 
       if (idReceta) {
         this.isEditMode = true;
         this.loadReceta(idReceta);
       } else {
+        if (this.producto && this.productosAsociados.length === 0) {
+          this.addProductoAsociado(this.producto.id, this.producto.producto);
+        }
         this.loading.set(false);
       }
     });
@@ -185,7 +256,9 @@ export class RecetaFormComponent implements OnInit {
       const receta = recetas.find(r => r.id === idReceta);
       if (receta) {
         this.recetaForm.patchValue({
-          raciones: receta.raciones,
+          nombre: receta.nombre || receta.nombreProducto,
+          cantidadPesada: receta.cantidadPesada,
+          unidadPesada: receta.unidadPesada,
           pasos: receta.pasos,
           tiempoTotal: receta.tiempoTotal
         });
@@ -201,6 +274,17 @@ export class RecetaFormComponent implements OnInit {
           this.ingredientes.push(ingForm);
         });
 
+        // Cargar productos asociados
+        this.productosAsociados.clear();
+        if (receta.productosAsociados && receta.productosAsociados.length > 0) {
+          receta.productosAsociados.forEach(p => {
+            this.addProductoAsociado(p.idProducto, p.nombreProducto, p.raciones);
+          });
+        } else if (receta.idProducto) {
+          // Retrocompatibilidad
+          this.addProductoAsociado(receta.idProducto, receta.nombreProducto || '', receta.raciones || '');
+        }
+
       } else {
         this.error.set('Receta no encontrada.');
       }
@@ -209,19 +293,20 @@ export class RecetaFormComponent implements OnInit {
   }
 
   onSubmit() {
-    if (this.recetaForm.invalid || !this.producto) return;
+    if (this.recetaForm.invalid) return;
 
     this.saving.set(true);
     const formValue = this.recetaForm.value;
     
     const receta: Receta = {
       id: this.isEditMode ? this.route.snapshot.paramMap.get('idReceta')! : crypto.randomUUID(),
-      idProducto: this.producto.id,
-      nombreProducto: this.producto.producto,
-      raciones: formValue.raciones,
+      nombre: formValue.nombre,
+      cantidadPesada: formValue.cantidadPesada,
+      unidadPesada: formValue.unidadPesada,
       ingredientes: formValue.ingredientes,
       pasos: formValue.pasos,
-      tiempoTotal: formValue.tiempoTotal
+      tiempoTotal: formValue.tiempoTotal,
+      productosAsociados: formValue.productosAsociados
     };
 
     const action = this.isEditMode 

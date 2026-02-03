@@ -14,12 +14,9 @@ import { Observable, map, switchMap, of } from 'rxjs';
       <div *ngIf="receta$ | async as r; else loading" class="content">
         <div class="header">
           <button class="btn-back" (click)="goBack()">← Volver</button>
-          <h2>Receta: {{ r.nombreProducto }}</h2>
+          <h2>Receta: {{ r.nombre || r.nombreProducto }}</h2>
           <div class="header-actions">
-            <button class="btn-producto" [routerLink]="['/productos', r.idProducto]">
-              Ir al Producto
-            </button>
-            <button class="btn-edit" [routerLink]="['/productos', r.idProducto, 'receta', r.id]">
+            <button class="btn-edit" [routerLink]="['/productos', r.productosAsociados?.[0]?.idProducto || r.idProducto, 'receta', r.id]">
               Editar Receta
             </button>
           </div>
@@ -28,14 +25,30 @@ import { Observable, map, switchMap, of } from 'rxjs';
         <div class="main-card">
           <div class="meta-grid">
             <div class="meta-item">
-              <label>Raciones</label>
-              <span>{{ r.raciones }}</span>
+              <label>Pesada Total</label>
+              <span class="highlight">{{ r.cantidadPesada }} {{ r.unidadPesada }}</span>
             </div>
             <div class="meta-item">
               <label>Tiempo Total</label>
-              <span class="highlight">⏱ {{ r.tiempoTotal }}</span>
+              <span>⏱ {{ r.tiempoTotal }}</span>
             </div>
           </div>
+
+          <section class="section">
+            <h3>Productos Producidos</h3>
+            <div class="asoc-products">
+              <div *ngFor="let p of r.productosAsociados" class="asoc-item">
+                <span class="p-name">{{ p.nombreProducto }}</span>
+                <span class="p-raciones">Raciones: {{ p.raciones }}</span>
+                <button class="btn-link-prod" [routerLink]="['/productos', p.idProducto]">Ver Producto</button>
+              </div>
+              <div *ngIf="!r.productosAsociados || r.productosAsociados.length === 0" class="asoc-item">
+                 <span class="p-name">{{ r.nombreProducto }}</span>
+                 <span class="p-raciones">Raciones: {{ r.raciones }}</span>
+                 <button class="btn-link-prod" [routerLink]="['/productos', r.idProducto]">Ver Producto</button>
+              </div>
+            </div>
+          </section>
 
           <section class="section">
             <h3>Ingredientes</h3>
@@ -96,6 +109,12 @@ import { Observable, map, switchMap, of } from 'rxjs';
     .ing-table { width: 100%; border-collapse: collapse; background: #f8fafc; border-radius: 8px; overflow: hidden; }
     .ing-table th { text-align: left; padding: 0.75rem 1rem; background: #f1f5f9; color: #64748b; font-size: 0.85rem; }
     .ing-table td { padding: 0.75rem 1rem; border-top: 1px solid #e2e8f0; color: #475569; }
+
+    .asoc-products { display: flex; flex-direction: column; gap: 0.5rem; }
+    .asoc-item { display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .p-name { font-weight: 600; color: #1e293b; min-width: 200px; }
+    .p-raciones { color: #64748b; font-size: 0.9rem; flex-grow: 1; }
+    .btn-link-prod { background: none; border: none; color: #3b82f6; cursor: pointer; font-size: 0.85rem; font-weight: 600; text-decoration: underline; }
 
     .steps-box { white-space: pre-wrap; line-height: 1.7; color: #334155; background: #fff; border: 1px solid #f1f5f9; padding: 1.5rem; border-radius: 8px; }
 

@@ -41,6 +41,21 @@
   .bold { font-weight: 600; color: #1e293b; }
 }
 
+.asoc-p-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.p-tag {
+  font-size: 0.7rem;
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  border: 1px solid #dbeafe;
+}
+
 .time-tag {
   display: inline-flex;
   align-items: center;

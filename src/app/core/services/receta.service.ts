@@ -46,7 +46,10 @@ export class RecetaService {
 
   getRecetasByProducto(idProducto: string): Observable<Receta[]> {
     return this.getRecetas().pipe(
-      map(recetas => recetas.filter(r => r.idProducto === idProducto))
+      map(recetas => recetas.filter(r => 
+        r.idProducto === idProducto || 
+        r.productosAsociados?.some(p => p.idProducto === idProducto)
+      ))
     );
   }
 
